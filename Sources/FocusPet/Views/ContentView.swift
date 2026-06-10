@@ -11,8 +11,19 @@ struct ContentView: View {
             SidebarView(selection: $selectedDestination, language: store.language)
                 .frame(width: 92)
 
-            TimerDashboardView(store: store, enterFloatingMode: enterFloatingMode)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            Group {
+                switch selectedDestination {
+                case .timer:
+                    TimerDashboardView(store: store, enterFloatingMode: enterFloatingMode)
+                case .petHouse:
+                    PetHouseView(store: store, enterFloatingMode: enterFloatingMode)
+                case .statistics:
+                    StatisticsView(store: store)
+                case .settings:
+                    SettingsView(store: store)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .background {
             ZStack {

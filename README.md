@@ -7,6 +7,7 @@ FocusPet is a native macOS Pomodoro desktop companion built with SwiftUI and a s
 - Native SwiftUI macOS app with adaptive light/dark glass styling.
 - Pomodoro focus and break timer with circular progress ring.
 - Main dashboard with sidebar navigation, task picker, pet selector, and language toggle.
+- Pet House, Statistics, and Settings pages for companion previews, progress snapshots, and timer preferences.
 - Floating pet mode using a transparent always-on-top AppKit panel.
 - Panda and cat vector pets with focus, break, and celebration states.
 - English and Chinese UI switching.
