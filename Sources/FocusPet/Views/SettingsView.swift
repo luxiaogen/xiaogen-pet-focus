@@ -54,7 +54,7 @@ struct SettingsView: View {
                                 Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
                             }
                         }
-                        .pickerStyle(.segmented)
+                        .pickerStyle(.menu)
 
                         Picker(text("Default task", "默认任务"), selection: $store.selectedTask) {
                             ForEach(store.tasks, id: \.self) { task in

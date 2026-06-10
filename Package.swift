@@ -12,7 +12,10 @@ let package = Package(
     targets: [
         .executableTarget(
             name: "FocusPet",
-            path: "Sources/FocusPet"
+            path: "Sources/FocusPet",
+            resources: [
+                .process("Resources")
+            ]
         )
     ]
 )

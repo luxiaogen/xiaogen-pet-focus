@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 struct PetView: View {
@@ -11,27 +12,34 @@ struct PetView: View {
         ZStack {
             Circle()
                 .fill(.thinMaterial)
-                .shadow(color: mode.ringColor.opacity(0.18), radius: compact ? 8 : 16)
+                .overlay {
+                    Circle()
+                        .fill(mode.ringColor.opacity(0.08))
+                        .padding(compact ? 14 : 20)
+                }
+                .shadow(color: mode.ringColor.opacity(0.22), radius: compact ? 8 : 18, y: compact ? 4 : 10)
 
             CircularProgressRing(progress: progress, color: mode.ringColor)
                 .padding(compact ? 8 : 10)
 
             if mode == .celebration {
                 ConfettiView()
-                    .padding(compact ? 6 : 0)
+                    .padding(compact ? 2 : 0)
             }
 
             Group {
                 switch kind {
                 case .panda:
-                    PandaPetDrawing(mode: mode)
+                    PandaSticker(mode: mode)
                 case .cat:
-                    CatPetDrawing(mode: mode)
+                    CatSticker(mode: mode)
+                case .doro, .feibi, .clawd, .gugugaga, .ikunchick:
+                    SpritePetImage(assetPrefix: kind.spriteAssetPrefix, frameCount: kind.spriteFrameCount, mode: mode)
                 }
             }
-            .padding(compact ? 24 : 32)
-            .offset(y: bob ? -4 : 3)
-            .animation(.easeInOut(duration: 1.7).repeatForever(autoreverses: true), value: bob)
+            .padding(compact ? 16 : 22)
+            .offset(y: bob ? -5 : 3)
+            .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: bob)
         }
         .onAppear {
             bob = true
@@ -39,7 +47,50 @@ struct PetView: View {
     }
 }
 
-private struct PandaPetDrawing: View {
+private struct SpritePetImage: View {
+    let assetPrefix: String
+    let frameCount: Int
+    let mode: PomodoroMode
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: 0.18)) { timeline in
+            GeometryReader { proxy in
+                let size = min(proxy.size.width, proxy.size.height)
+                let frame = frameIndex(at: timeline.date)
+
+                if let image = petImage(frame: frame) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.none)
+                        .scaledToFit()
+                        .frame(width: size * spriteScale, height: size * spriteScale)
+                        .rotationEffect(.degrees(mode == .celebration ? Double((frame % 3) - 1) * 4 : 0))
+                        .scaleEffect(mode == .celebration && frame % 2 == 0 ? 1.04 : 1)
+                        .shadow(color: .black.opacity(0.18), radius: size * 0.025, y: size * 0.018)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                }
+            }
+        }
+    }
+
+    private var spriteScale: CGFloat {
+        mode == .celebration ? 0.98 : 0.92
+    }
+
+    private func frameIndex(at date: Date) -> Int {
+        guard frameCount > 0 else { return 0 }
+        return Int(date.timeIntervalSinceReferenceDate / 0.18) % frameCount
+    }
+
+    private func petImage(frame: Int) -> NSImage? {
+        guard let url = Bundle.module.url(forResource: "\(assetPrefix)_\(frame)", withExtension: "png") else {
+            return nil
+        }
+        return NSImage(contentsOf: url)
+    }
+}
+
+private struct PandaSticker: View {
     let mode: PomodoroMode
 
     var body: some View {
@@ -47,232 +98,241 @@ private struct PandaPetDrawing: View {
             let size = min(proxy.size.width, proxy.size.height)
             ZStack {
                 Ellipse()
-                    .fill(Color.black.opacity(0.14))
-                    .frame(width: size * 0.76, height: size * 0.12)
-                    .offset(y: size * 0.38)
-
-                if mode == .focus {
-                    TinyDesk(size: size)
-                        .offset(y: size * 0.31)
-                }
-
-                Circle()
-                    .fill(Color.black)
-                    .frame(width: size * 0.32, height: size * 0.32)
-                    .offset(x: -size * 0.24, y: -size * 0.25)
-                Circle()
-                    .fill(Color.black)
-                    .frame(width: size * 0.32, height: size * 0.32)
-                    .offset(x: size * 0.24, y: -size * 0.25)
-
-                Circle()
-                    .fill(Color(red: 0.98, green: 0.96, blue: 0.88))
-                    .frame(width: size * 0.82, height: size * 0.82)
+                    .fill(Color.black.opacity(0.16))
+                    .frame(width: size * 0.72, height: size * 0.13)
+                    .offset(y: size * 0.41)
+                    .blur(radius: size * 0.012)
 
                 Circle()
                     .fill(Color.black.opacity(0.9))
-                    .frame(width: size * 0.22, height: size * 0.25)
-                    .offset(x: -size * 0.16, y: -size * 0.06)
+                    .frame(width: size * 0.27, height: size * 0.27)
+                    .offset(x: -size * 0.29, y: -size * 0.25)
                 Circle()
                     .fill(Color.black.opacity(0.9))
-                    .frame(width: size * 0.22, height: size * 0.25)
-                    .offset(x: size * 0.16, y: -size * 0.06)
+                    .frame(width: size * 0.27, height: size * 0.27)
+                    .offset(x: size * 0.29, y: -size * 0.25)
 
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: size * 0.065, height: size * 0.065)
-                    .offset(x: -size * 0.13, y: -size * 0.1)
-                Circle()
-                    .fill(Color.white)
-                    .frame(width: size * 0.065, height: size * 0.065)
-                    .offset(x: size * 0.19, y: -size * 0.1)
-
-                Capsule()
-                    .fill(Color.black.opacity(0.9))
-                    .frame(width: size * 0.12, height: size * 0.08)
-                    .offset(y: size * 0.08)
-
-                PetMouth(mode: mode)
-                    .stroke(Color.black.opacity(0.8), lineWidth: size * 0.025)
-                    .frame(width: size * 0.24, height: size * 0.14)
-                    .offset(y: size * 0.18)
-
-                PandaAccessory(mode: mode, size: size)
-            }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-        }
-    }
-}
-
-private struct CatPetDrawing: View {
-    let mode: PomodoroMode
-
-    var body: some View {
-        GeometryReader { proxy in
-            let size = min(proxy.size.width, proxy.size.height)
-            ZStack {
-                Ellipse()
-                    .fill(Color.black.opacity(0.14))
-                    .frame(width: size * 0.78, height: size * 0.12)
-                    .offset(y: size * 0.38)
-
-                if mode == .focus {
-                    TinyDesk(size: size)
-                        .offset(y: size * 0.31)
-                }
-
-                Triangle()
-                    .fill(Color(red: 0.98, green: 0.63, blue: 0.34))
-                    .frame(width: size * 0.28, height: size * 0.3)
-                    .offset(x: -size * 0.25, y: -size * 0.28)
-                    .rotationEffect(.degrees(-18))
-                Triangle()
-                    .fill(Color(red: 0.98, green: 0.63, blue: 0.34))
-                    .frame(width: size * 0.28, height: size * 0.3)
-                    .offset(x: size * 0.25, y: -size * 0.28)
-                    .rotationEffect(.degrees(18))
-
-                Circle()
-                    .fill(Color(red: 1.0, green: 0.7, blue: 0.42))
-                    .frame(width: size * 0.82, height: size * 0.82)
-
-                Triangle()
-                    .fill(Color(red: 1.0, green: 0.82, blue: 0.65))
-                    .frame(width: size * 0.14, height: size * 0.14)
-                    .offset(x: -size * 0.25, y: -size * 0.28)
-                    .rotationEffect(.degrees(-18))
-                Triangle()
-                    .fill(Color(red: 1.0, green: 0.82, blue: 0.65))
-                    .frame(width: size * 0.14, height: size * 0.14)
-                    .offset(x: size * 0.25, y: -size * 0.28)
-                    .rotationEffect(.degrees(18))
-
-                Capsule()
-                    .fill(Color.black.opacity(0.85))
-                    .frame(width: size * 0.07, height: size * 0.12)
-                    .offset(x: -size * 0.15, y: -size * 0.06)
-                Capsule()
-                    .fill(Color.black.opacity(0.85))
-                    .frame(width: size * 0.07, height: size * 0.12)
-                    .offset(x: size * 0.15, y: -size * 0.06)
-
-                Circle()
-                    .fill(Color.pink.opacity(0.9))
-                    .frame(width: size * 0.09, height: size * 0.07)
-                    .offset(y: size * 0.08)
-
-                PetMouth(mode: mode)
-                    .stroke(Color.black.opacity(0.75), lineWidth: size * 0.022)
-                    .frame(width: size * 0.24, height: size * 0.14)
-                    .offset(y: size * 0.18)
-
-                CatAccessory(mode: mode, size: size)
-            }
-            .frame(width: proxy.size.width, height: proxy.size.height)
-        }
-    }
-}
-
-private struct PandaAccessory: View {
-    let mode: PomodoroMode
-    let size: CGFloat
-
-    var body: some View {
-        switch mode {
-        case .focus:
-            Glasses(size: size)
-                .offset(y: -size * 0.05)
-        case .breakTime:
-            Bamboo(size: size)
-                .offset(x: size * 0.28, y: size * 0.2)
-        case .celebration:
-            PartyHat(size: size)
-                .offset(y: -size * 0.48)
-        }
-    }
-}
-
-private struct CatAccessory: View {
-    let mode: PomodoroMode
-    let size: CGFloat
-
-    var body: some View {
-        switch mode {
-        case .focus:
-            Glasses(size: size)
-                .offset(y: -size * 0.05)
-        case .breakTime:
-            Ball(size: size)
-                .offset(x: size * 0.32, y: size * 0.27)
-        case .celebration:
-            PartyHat(size: size)
-                .offset(y: -size * 0.48)
-        }
-    }
-}
-
-private struct Glasses: View {
-    let size: CGFloat
-
-    var body: some View {
-        HStack(spacing: size * 0.05) {
-            RoundedRectangle(cornerRadius: size * 0.04)
-                .stroke(Color.black.opacity(0.78), lineWidth: size * 0.025)
-                .frame(width: size * 0.24, height: size * 0.16)
-            RoundedRectangle(cornerRadius: size * 0.04)
-                .stroke(Color.black.opacity(0.78), lineWidth: size * 0.025)
-                .frame(width: size * 0.24, height: size * 0.16)
-        }
-    }
-}
-
-private struct TinyDesk: View {
-    let size: CGFloat
-
-    var body: some View {
-        RoundedRectangle(cornerRadius: size * 0.05, style: .continuous)
-            .fill(Color(red: 0.48, green: 0.28, blue: 0.18))
-            .frame(width: size * 0.62, height: size * 0.12)
-            .overlay(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: size * 0.02)
-                    .fill(Color.celebrationGold.opacity(0.9))
-                    .frame(width: size * 0.16, height: size * 0.05)
-                    .offset(x: -size * 0.07, y: -size * 0.035)
-            }
-    }
-}
-
-private struct Bamboo: View {
-    let size: CGFloat
-
-    var body: some View {
-        Capsule()
-            .fill(Color.breakSage)
-            .frame(width: size * 0.08, height: size * 0.33)
-            .rotationEffect(.degrees(35))
-            .overlay {
-                VStack(spacing: size * 0.05) {
-                    ForEach(0..<3) { _ in
-                        Rectangle()
-                            .fill(Color.white.opacity(0.55))
-                            .frame(height: size * 0.012)
+                RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                    .fill(Color(red: 1.0, green: 0.97, blue: 0.88))
+                    .frame(width: size * 0.7, height: size * 0.76)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
+                            .stroke(Color.black.opacity(0.82), lineWidth: size * 0.035)
                     }
+
+                eyePatch(size: size, x: -0.16)
+                eyePatch(size: size, x: 0.16)
+                glossyEye(size: size, x: -0.16)
+                glossyEye(size: size, x: 0.16)
+
+                Capsule()
+                    .fill(Color.black.opacity(0.88))
+                    .frame(width: size * 0.1, height: size * 0.07)
+                    .offset(y: size * 0.06)
+
+                PetMouth(mode: mode)
+                    .stroke(Color.black.opacity(0.82), lineWidth: size * 0.022)
+                    .frame(width: size * 0.22, height: size * 0.12)
+                    .offset(y: size * 0.16)
+
+                paw(size: size, x: -0.32, y: 0.16, rotation: -18, color: .black.opacity(0.88))
+                paw(size: size, x: 0.32, y: 0.16, rotation: 18, color: .black.opacity(0.88))
+                StateProp(mode: mode, size: size)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+    }
+}
+
+private struct CatSticker: View {
+    let mode: PomodoroMode
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = min(proxy.size.width, proxy.size.height)
+            let fur = Color(red: 1.0, green: 0.67, blue: 0.36)
+            let furDark = Color(red: 0.83, green: 0.38, blue: 0.16)
+
+            ZStack {
+                Ellipse()
+                    .fill(Color.black.opacity(0.16))
+                    .frame(width: size * 0.72, height: size * 0.13)
+                    .offset(y: size * 0.41)
+                    .blur(radius: size * 0.012)
+
+                Triangle()
+                    .fill(fur)
+                    .frame(width: size * 0.26, height: size * 0.28)
+                    .rotationEffect(.degrees(-18))
+                    .offset(x: -size * 0.28, y: -size * 0.28)
+                Triangle()
+                    .fill(fur)
+                    .frame(width: size * 0.26, height: size * 0.28)
+                    .rotationEffect(.degrees(18))
+                    .offset(x: size * 0.28, y: -size * 0.28)
+
+                RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+                    .fill(fur)
+                    .frame(width: size * 0.72, height: size * 0.74)
+                    .overlay {
+                        RoundedRectangle(cornerRadius: size * 0.27, style: .continuous)
+                            .stroke(Color.black.opacity(0.78), lineWidth: size * 0.035)
+                    }
+
+                ForEach([-0.13, 0, 0.13], id: \.self) { x in
+                    Capsule()
+                        .fill(furDark)
+                        .frame(width: size * 0.045, height: size * 0.16)
+                        .rotationEffect(.degrees(x * 120))
+                        .offset(x: size * x, y: -size * 0.23)
                 }
+
+                glossyCatEye(size: size, x: -0.14)
+                glossyCatEye(size: size, x: 0.14)
+
+                Circle()
+                    .fill(Color(red: 0.96, green: 0.23, blue: 0.34))
+                    .frame(width: size * 0.075, height: size * 0.06)
+                    .offset(y: size * 0.07)
+
+                PetMouth(mode: mode)
+                    .stroke(Color.black.opacity(0.78), lineWidth: size * 0.022)
+                    .frame(width: size * 0.22, height: size * 0.12)
+                    .offset(y: size * 0.16)
+
+                paw(size: size, x: -0.33, y: 0.17, rotation: -18, color: furDark)
+                paw(size: size, x: 0.33, y: 0.17, rotation: 18, color: furDark)
+                StateProp(mode: mode, size: size)
+            }
+            .frame(width: proxy.size.width, height: proxy.size.height)
+        }
+    }
+}
+
+private struct StateProp: View {
+    let mode: PomodoroMode
+    let size: CGFloat
+
+    var body: some View {
+        switch mode {
+        case .focus:
+            ZStack {
+                FocusGlasses(size: size)
+                    .offset(y: -size * 0.07)
+                TinyLaptop(size: size)
+                    .offset(y: size * 0.35)
+            }
+        case .breakTime:
+            BreakBubble(size: size)
+                .offset(x: size * 0.3, y: size * 0.24)
+        case .celebration:
+            PartyHat(size: size)
+                .offset(y: -size * 0.5)
+        }
+    }
+}
+
+private func eyePatch(size: CGFloat, x: CGFloat) -> some View {
+    RoundedRectangle(cornerRadius: size * 0.09, style: .continuous)
+        .fill(Color.black.opacity(0.88))
+        .frame(width: size * 0.2, height: size * 0.24)
+        .rotationEffect(.degrees(x < 0 ? -14 : 14))
+        .offset(x: size * x, y: -size * 0.06)
+}
+
+private func glossyEye(size: CGFloat, x: CGFloat) -> some View {
+    ZStack(alignment: .topLeading) {
+        Circle()
+            .fill(Color(red: 0.24, green: 0.18, blue: 0.32))
+        Circle()
+            .fill(Color.white)
+            .frame(width: size * 0.035, height: size * 0.035)
+            .offset(x: size * 0.035, y: size * 0.028)
+    }
+    .frame(width: size * 0.09, height: size * 0.09)
+    .offset(x: size * x, y: -size * 0.08)
+}
+
+private func glossyCatEye(size: CGFloat, x: CGFloat) -> some View {
+    ZStack(alignment: .topLeading) {
+        RoundedRectangle(cornerRadius: size * 0.035, style: .continuous)
+            .fill(Color(red: 0.34, green: 0.24, blue: 0.5))
+        Circle()
+            .fill(Color.white)
+            .frame(width: size * 0.032, height: size * 0.032)
+            .offset(x: size * 0.028, y: size * 0.022)
+    }
+    .frame(width: size * 0.08, height: size * 0.12)
+    .offset(x: size * x, y: -size * 0.07)
+}
+
+private func paw(size: CGFloat, x: CGFloat, y: CGFloat, rotation: Double, color: Color) -> some View {
+    Capsule()
+        .fill(color)
+        .frame(width: size * 0.13, height: size * 0.22)
+        .rotationEffect(.degrees(rotation))
+        .offset(x: size * x, y: size * y)
+}
+
+private struct FocusGlasses: View {
+    let size: CGFloat
+
+    var body: some View {
+        HStack(spacing: size * 0.055) {
+            lens
+            lens
+        }
+        .overlay {
+            Rectangle()
+                .fill(Color.black.opacity(0.72))
+                .frame(width: size * 0.08, height: size * 0.022)
+        }
+    }
+
+    private var lens: some View {
+        RoundedRectangle(cornerRadius: size * 0.045, style: .continuous)
+            .fill(Color.black.opacity(0.15))
+            .frame(width: size * 0.22, height: size * 0.15)
+            .overlay {
+                RoundedRectangle(cornerRadius: size * 0.045, style: .continuous)
+                    .stroke(Color.black.opacity(0.76), lineWidth: size * 0.025)
             }
     }
 }
 
-private struct Ball: View {
+private struct TinyLaptop: View {
+    let size: CGFloat
+
+    var body: some View {
+        RoundedRectangle(cornerRadius: size * 0.035, style: .continuous)
+            .fill(Color(red: 0.32, green: 0.34, blue: 0.4))
+            .frame(width: size * 0.42, height: size * 0.22)
+            .overlay {
+                RoundedRectangle(cornerRadius: size * 0.035, style: .continuous)
+                    .stroke(Color.black.opacity(0.65), lineWidth: size * 0.018)
+            }
+            .overlay {
+                Image(systemName: "pawprint.fill")
+                    .font(.system(size: size * 0.075, weight: .bold))
+                    .foregroundStyle(Color.white.opacity(0.8))
+            }
+    }
+}
+
+private struct BreakBubble: View {
     let size: CGFloat
 
     var body: some View {
         Circle()
             .fill(Color.breakSage.gradient)
-            .frame(width: size * 0.22, height: size * 0.22)
+            .frame(width: size * 0.2, height: size * 0.2)
             .overlay {
-                Circle()
-                    .stroke(Color.white.opacity(0.7), lineWidth: size * 0.018)
-                    .padding(size * 0.045)
+                Image(systemName: "leaf.fill")
+                    .font(.system(size: size * 0.08, weight: .bold))
+                    .foregroundStyle(Color.white)
+            }
+            .overlay {
+                Circle().stroke(Color.black.opacity(0.35), lineWidth: size * 0.012)
             }
     }
 }
@@ -283,13 +343,18 @@ private struct PartyHat: View {
     var body: some View {
         Triangle()
             .fill(LinearGradient(colors: [.celebrationGold, .focusTomato], startPoint: .top, endPoint: .bottom))
-            .frame(width: size * 0.26, height: size * 0.34)
+            .frame(width: size * 0.24, height: size * 0.32)
+            .overlay {
+                Triangle()
+                    .stroke(Color.black.opacity(0.55), lineWidth: size * 0.018)
+            }
             .overlay(alignment: .top) {
                 Circle()
                     .fill(Color.white)
-                    .frame(width: size * 0.06, height: size * 0.06)
+                    .frame(width: size * 0.055, height: size * 0.055)
                     .offset(y: -size * 0.035)
             }
+            .rotationEffect(.degrees(-8))
     }
 }
 
@@ -298,14 +363,14 @@ private struct ConfettiView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            ForEach(0..<14, id: \.self) { index in
+            ForEach(0..<18, id: \.self) { index in
                 RoundedRectangle(cornerRadius: 2)
                     .fill(colors[index % colors.count])
                     .frame(width: 5, height: 10)
-                    .rotationEffect(.degrees(Double(index * 21)))
+                    .rotationEffect(.degrees(Double(index * 23)))
                     .position(
-                        x: proxy.size.width * CGFloat((index % 5) + 1) / 6,
-                        y: proxy.size.height * CGFloat((index * 7 % 5) + 1) / 6
+                        x: proxy.size.width * CGFloat((index * 2 % 7) + 1) / 8,
+                        y: proxy.size.height * CGFloat((index * 5 % 7) + 1) / 8
                     )
             }
         }
@@ -319,8 +384,8 @@ private struct PetMouth: Shape {
         var path = Path()
         switch mode {
         case .focus:
-            path.move(to: CGPoint(x: rect.minX + rect.width * 0.22, y: rect.midY))
-            path.addLine(to: CGPoint(x: rect.maxX - rect.width * 0.22, y: rect.midY))
+            path.move(to: CGPoint(x: rect.minX + rect.width * 0.25, y: rect.midY))
+            path.addLine(to: CGPoint(x: rect.maxX - rect.width * 0.25, y: rect.midY))
         case .breakTime:
             path.move(to: CGPoint(x: rect.minX + rect.width * 0.2, y: rect.midY))
             path.addQuadCurve(
@@ -328,7 +393,7 @@ private struct PetMouth: Shape {
                 control: CGPoint(x: rect.midX, y: rect.maxY)
             )
         case .celebration:
-            path.addEllipse(in: CGRect(x: rect.midX - rect.width * 0.18, y: rect.midY - rect.height * 0.1, width: rect.width * 0.36, height: rect.height * 0.34))
+            path.addEllipse(in: CGRect(x: rect.midX - rect.width * 0.18, y: rect.midY - rect.height * 0.08, width: rect.width * 0.36, height: rect.height * 0.34))
         }
         return path
     }

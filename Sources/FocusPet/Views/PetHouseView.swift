@@ -19,7 +19,7 @@ struct PetHouseView: View {
                         Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
                     }
                 }
-                .pickerStyle(.segmented)
+                .pickerStyle(.menu)
                 .frame(width: 180)
             }
 

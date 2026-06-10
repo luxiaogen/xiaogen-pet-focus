@@ -45,8 +45,8 @@ struct TimerDashboardView: View {
                     Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
                 }
             }
-            .pickerStyle(.segmented)
-            .frame(width: 170)
+            .pickerStyle(.menu)
+            .frame(width: 150)
         }
     }
 
