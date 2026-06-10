@@ -8,16 +8,16 @@ enum SidebarDestination: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(in language: AppLanguage) -> String {
         switch self {
         case .timer:
-            "Timer"
+            language == .chinese ? "计时器" : "Timer"
         case .petHouse:
-            "Pet House"
+            language == .chinese ? "宠物屋" : "Pet House"
         case .statistics:
-            "Statistics"
+            language == .chinese ? "统计" : "Statistics"
         case .settings:
-            "Settings"
+            language == .chinese ? "设置" : "Settings"
         }
     }
 

@@ -58,7 +58,7 @@ struct FloatingPetWidget: View {
                     .frame(width: 26, height: 26)
             }
             .buttonStyle(FloatingControlButtonStyle(color: store.mode.ringColor))
-            .help(store.isRunning ? "Pause" : "Play")
+            .help(store.isRunning ? languageText("Pause", "暂停") : languageText("Play", "播放"))
 
             Button {
                 FloatingPetWindowController.shared.hide()
@@ -68,8 +68,12 @@ struct FloatingPetWidget: View {
                     .frame(width: 26, height: 26)
             }
             .buttonStyle(FloatingControlButtonStyle(color: .secondary))
-            .help("Expand")
+            .help(languageText("Expand", "展开"))
         }
+    }
+
+    private func languageText(_ english: String, _ chinese: String) -> String {
+        store.language == .chinese ? chinese : english
     }
 }
 

@@ -7,14 +7,14 @@ enum PomodoroMode: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(in language: AppLanguage) -> String {
         switch self {
         case .focus:
-            "Focus"
+            language == .chinese ? "专注" : "Focus"
         case .breakTime:
-            "Break"
+            language == .chinese ? "休息" : "Break"
         case .celebration:
-            "Done"
+            language == .chinese ? "完成" : "Done"
         }
     }
 
@@ -29,14 +29,14 @@ enum PomodoroMode: String, CaseIterable, Identifiable {
         }
     }
 
-    var slogan: String {
+    func slogan(in language: AppLanguage) -> String {
         switch self {
         case .focus:
-            "Time to focus, luxiaogen!"
+            language == .chinese ? "该专注啦，luxiaogen！" : "Time to focus, luxiaogen!"
         case .breakTime:
-            "Take a soft reset, luxiaogen."
+            language == .chinese ? "休息一下，慢慢回血。" : "Take a soft reset, luxiaogen."
         case .celebration:
-            "Session complete. Nice work!"
+            language == .chinese ? "本轮完成，做得不错！" : "Session complete. Nice work!"
         }
     }
 }

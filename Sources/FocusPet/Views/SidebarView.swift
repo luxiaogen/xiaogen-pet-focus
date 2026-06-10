@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @Binding var selection: SidebarDestination
+    let language: AppLanguage
 
     var body: some View {
         VStack(spacing: 18) {
@@ -30,7 +31,7 @@ struct SidebarView: View {
                             }
                     }
                     .buttonStyle(.plain)
-                    .help(destination.title)
+                    .help(destination.title(in: language))
                 }
             }
 

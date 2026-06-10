@@ -9,6 +9,7 @@ final class TimerStore: ObservableObject {
     @Published var isRunning = false
     @Published var selectedTask = "Design System Update"
     @Published var selectedPet: PetKind = .panda
+    @Published var language: AppLanguage = .english
     @Published private(set) var completedSessions = 0
 
     let tasks = [
@@ -17,6 +18,15 @@ final class TimerStore: ObservableObject {
         "Prototype Pet Motion",
         "Inbox Cleanup"
     ]
+
+    var localizedTasks: [String] {
+        switch language {
+        case .english:
+            tasks
+        case .chinese:
+            ["设计系统更新", "写专注笔记", "原型桌宠动效", "清理收件箱"]
+        }
+    }
 
     private var timer: Timer?
 
@@ -42,7 +52,12 @@ final class TimerStore: ObservableObject {
     }
 
     var primaryActionTitle: String {
-        isRunning ? "Pause" : "Start Focus"
+        switch language {
+        case .english:
+            isRunning ? "Pause" : "Start Focus"
+        case .chinese:
+            isRunning ? "暂停" : "开始专注"
+        }
     }
 
     var primaryActionSymbol: String {
@@ -82,6 +97,11 @@ final class TimerStore: ObservableObject {
     func resetCurrentMode() {
         pause()
         remainingSeconds = totalSeconds
+    }
+
+    func localizedTaskTitle(for task: String) -> String {
+        guard let index = tasks.firstIndex(of: task) else { return task }
+        return localizedTasks[index]
     }
 
     private func scheduleTimer() {

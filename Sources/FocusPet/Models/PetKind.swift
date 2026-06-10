@@ -6,12 +6,12 @@ enum PetKind: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
-    var title: String {
+    func title(in language: AppLanguage) -> String {
         switch self {
         case .panda:
-            "Panda"
+            language == .chinese ? "熊猫" : "Panda"
         case .cat:
-            "Cat"
+            language == .chinese ? "猫咪" : "Cat"
         }
     }
 

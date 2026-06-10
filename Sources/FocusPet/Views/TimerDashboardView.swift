@@ -24,16 +24,25 @@ struct TimerDashboardView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("FocusPet")
                     .font(.system(size: 28, weight: .bold, design: .rounded))
-                Text(store.mode.slogan)
+                Text(store.mode.slogan(in: store.language))
                     .font(.system(size: 16, weight: .medium))
                     .foregroundStyle(.secondary)
             }
 
             Spacer()
 
-            Picker("Pet", selection: $store.selectedPet) {
+            Picker("Language", selection: $store.language) {
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language.shortTitle).tag(language)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 126)
+            .labelsHidden()
+
+            Picker(languageText("Pet", "宠物"), selection: $store.selectedPet) {
                 ForEach(PetKind.allCases) { pet in
-                    Label(pet.title, systemImage: pet.symbolName).tag(pet)
+                    Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
                 }
             }
             .pickerStyle(.segmented)
@@ -43,9 +52,9 @@ struct TimerDashboardView: View {
 
     private var timerPanel: some View {
         VStack(spacing: 26) {
-            Picker("Task", selection: $store.selectedTask) {
+            Picker(languageText("Task", "任务"), selection: $store.selectedTask) {
                 ForEach(store.tasks, id: \.self) { task in
-                    Text(task).tag(task)
+                    Text(store.localizedTaskTitle(for: task)).tag(task)
                 }
             }
             .pickerStyle(.menu)
@@ -61,7 +70,7 @@ struct TimerDashboardView: View {
                         .monospacedDigit()
                         .foregroundStyle(.primary)
 
-                    Text("\(store.mode.title) Session")
+                    Text(languageText("\(store.mode.title(in: store.language)) Session", "\(store.mode.title(in: store.language))模式"))
                         .font(.system(size: 13, weight: .semibold))
                         .textCase(.uppercase)
                         .foregroundStyle(.secondary)
@@ -84,7 +93,7 @@ struct TimerDashboardView: View {
                 Button {
                     enterFloatingMode()
                 } label: {
-                    Label("Switch to Pet Floating Mode", systemImage: "pip.enter")
+                    Label(languageText("Switch to Pet Floating Mode", "切换到宠物悬浮模式"), systemImage: "pip.enter")
                         .font(.system(size: 13, weight: .semibold))
                         .padding(.horizontal, 18)
                         .padding(.vertical, 12)
@@ -105,17 +114,17 @@ struct TimerDashboardView: View {
 
     private var modeControls: some View {
         HStack(spacing: 10) {
-            Button("Focus") {
+            Button(store.mode == .focus ? store.mode.title(in: store.language) : languageText("Focus", "专注")) {
                 store.startFocus()
             }
             .buttonStyle(SmallModeButtonStyle(isSelected: store.mode == .focus, color: .focusTomato))
 
-            Button("Break") {
+            Button(store.mode == .breakTime ? store.mode.title(in: store.language) : languageText("Break", "休息")) {
                 store.startBreak()
             }
             .buttonStyle(SmallModeButtonStyle(isSelected: store.mode == .breakTime, color: .breakSage))
 
-            Button("Reset") {
+            Button(languageText("Reset", "重置")) {
                 store.resetCurrentMode()
             }
             .buttonStyle(SmallModeButtonStyle(isSelected: false, color: .secondary))
@@ -125,7 +134,7 @@ struct TimerDashboardView: View {
     private var companionPanel: some View {
         VStack(spacing: 20) {
             HStack {
-                Text("Companion")
+                Text(languageText("Companion", "专注伙伴"))
                     .font(.system(size: 20, weight: .bold, design: .rounded))
                 Spacer()
                 Image(systemName: "sparkles")
@@ -136,7 +145,7 @@ struct TimerDashboardView: View {
                 .frame(width: 188, height: 188)
 
             VStack(spacing: 4) {
-                Text(store.selectedPet.title)
+                Text(store.selectedPet.title(in: store.language))
                     .font(.system(size: 21, weight: .bold, design: .rounded))
                 Text(statusText)
                     .font(.system(size: 13, weight: .medium))
@@ -147,7 +156,7 @@ struct TimerDashboardView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text("Daily Goal")
+                    Text(languageText("Daily Goal", "今日目标"))
                     Spacer()
                     Text("\(store.completedSessions) / 4")
                         .fontWeight(.bold)
@@ -169,12 +178,16 @@ struct TimerDashboardView: View {
     private var statusText: String {
         switch store.mode {
         case .focus:
-            "Working quietly"
+            languageText("Working quietly", "安静专注中")
         case .breakTime:
-            "Taking a snack break"
+            languageText("Taking a snack break", "正在补充能量")
         case .celebration:
-            "Celebrating with you"
+            languageText("Celebrating with you", "和你一起庆祝")
         }
+    }
+
+    private func languageText(_ english: String, _ chinese: String) -> String {
+        store.language == .chinese ? chinese : english
     }
 }
 

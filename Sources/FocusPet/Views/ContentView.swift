@@ -8,7 +8,7 @@ struct ContentView: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            SidebarView(selection: $selectedDestination)
+            SidebarView(selection: $selectedDestination, language: store.language)
                 .frame(width: 92)
 
             TimerDashboardView(store: store, enterFloatingMode: enterFloatingMode)
