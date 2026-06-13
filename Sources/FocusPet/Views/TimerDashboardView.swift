@@ -16,7 +16,7 @@ struct TimerDashboardView: View {
 
             GeometryReader { proxy in
                 let timerSize = panelSize(for: proxy.size, preferredWidth: 640, minimumWidth: 460)
-                let companionSize = CGSize(width: min(270, max(230, proxy.size.width * 0.22)), height: timerSize.height)
+                let companionSize = CGSize(width: min(290, max(250, proxy.size.width * 0.24)), height: timerSize.height)
 
                 ZStack {
                     DraggableDashboardPanel(
@@ -54,13 +54,7 @@ struct TimerDashboardView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 6) {
-                Text("FocusPet")
-                    .font(.system(size: 28, weight: .bold, design: .rounded))
-                Text(store.mode.slogan(in: store.language))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
+            PageHeader(title: "FocusPet", subtitle: store.mode.slogan(in: store.language), accent: store.mode.ringColor)
 
             Spacer()
 
@@ -92,6 +86,8 @@ struct TimerDashboardView: View {
             }
             .pickerStyle(.menu)
             .frame(width: 250)
+
+            sessionPlanner
 
             ZStack {
                 CircularProgressRing(progress: store.progress, color: store.mode.ringColor)
@@ -151,7 +147,13 @@ struct TimerDashboardView: View {
         }
         .padding(30)
         .frame(maxHeight: .infinity)
-        .appleGlassSurface(cornerRadius: 22, tint: store.mode.ringColor, material: .regularMaterial)
+        .appleGlassSurface(cornerRadius: 24, tint: store.mode.ringColor, material: .regularMaterial)
+        .overlay(alignment: .topLeading) {
+            Capsule()
+                .fill(store.mode.ringColor.opacity(0.62))
+                .frame(width: 38, height: 4)
+                .padding(20)
+        }
     }
 
     private var modeControls: some View {
@@ -170,6 +172,37 @@ struct TimerDashboardView: View {
                 store.resetCurrentMode()
             }
             .buttonStyle(SmallModeButtonStyle(isSelected: false, color: .secondary))
+        }
+    }
+
+    private var sessionPlanner: some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 7) {
+                Text(languageText("Session Plan", "本轮计划"))
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                Text(store.localizedTaskTitle(for: store.selectedTask))
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+
+            ForEach([15, 25, 45], id: \.self) { minutes in
+                Button {
+                    store.setCurrentModeDuration(TimeInterval(minutes * 60))
+                } label: {
+                    Text("\(minutes)m")
+                        .frame(width: 46)
+                }
+                .buttonStyle(QuickDurationButtonStyle(isSelected: Int(store.totalSeconds / 60) == minutes, color: store.mode.ringColor))
+                .help(languageText("Set timer to \(minutes) minutes", "设置为 \(minutes) 分钟"))
+            }
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
         }
     }
 
@@ -196,6 +229,8 @@ struct TimerDashboardView: View {
 
             Spacer()
 
+            companionCareModule
+
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Text(languageText("Daily Goal", "今日目标"))
@@ -210,7 +245,45 @@ struct TimerDashboardView: View {
             }
         }
         .padding(22)
-        .appleGlassSurface(cornerRadius: 22, tint: store.mode.ringColor, material: .regularMaterial)
+        .appleGlassSurface(cornerRadius: 24, tint: store.mode.ringColor, material: .regularMaterial)
+        .overlay(alignment: .topLeading) {
+            Capsule()
+                .fill(store.mode.ringColor.opacity(0.62))
+                .frame(width: 34, height: 4)
+                .padding(18)
+        }
+    }
+
+    private var companionCareModule: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(languageText("Care Status", "照顾状态"))
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+
+            careRow(label: languageText("Energy", "能量"), value: store.isRunning ? 0.68 : 0.86, color: .breakSage)
+            careRow(label: languageText("Bond", "亲密度"), value: min(1, 0.42 + Double(store.completedSessions) * 0.12), color: store.mode.ringColor)
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
+        }
+    }
+
+    private func careRow(label: String, value: Double, color: Color) -> some View {
+        VStack(alignment: .leading, spacing: 5) {
+            HStack {
+                Text(label)
+                Spacer()
+                Text("\(Int(value * 100))%")
+                    .fontWeight(.bold)
+            }
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(.secondary)
+
+            ProgressView(value: value)
+                .tint(color)
+        }
     }
 
     private var statusText: String {
@@ -230,7 +303,7 @@ struct TimerDashboardView: View {
 
     private func panelSize(for containerSize: CGSize, preferredWidth: CGFloat, minimumWidth: CGFloat) -> CGSize {
         let width = min(preferredWidth, max(minimumWidth, containerSize.width * 0.52))
-        let height = min(max(470, containerSize.height - 4), max(360, containerSize.height))
+        let height = min(max(500, containerSize.height - 4), max(380, containerSize.height))
         return CGSize(width: width, height: height)
     }
 
@@ -402,5 +475,26 @@ struct SmallModeButtonStyle: ButtonStyle {
                     }
             }
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
+    }
+}
+
+private struct QuickDurationButtonStyle: ButtonStyle {
+    let isSelected: Bool
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(isSelected ? Color.white : Color.primary)
+            .padding(.vertical, 7)
+            .background {
+                Capsule()
+                    .fill(isSelected ? color : Color.primary.opacity(0.06))
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(Color.white.opacity(isSelected ? 0.42 : 0.18), lineWidth: 0.8)
+                    }
+            }
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
     }
 }

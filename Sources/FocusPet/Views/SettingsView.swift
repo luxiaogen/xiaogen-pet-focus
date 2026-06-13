@@ -7,11 +7,12 @@ struct SettingsView: View {
         VStack(alignment: .leading, spacing: 24) {
             PageHeader(
                 title: text("Settings", "设置"),
-                subtitle: text("Tune the FocusPet session and interface defaults.", "调整 FocusPet 的番茄钟和界面偏好。")
+                subtitle: text("Tune the FocusPet session and interface defaults.", "调整 FocusPet 的番茄钟和界面偏好。"),
+                accent: store.mode.ringColor
             )
 
             HStack(alignment: .top, spacing: 18) {
-                GlassCard {
+                GlassCard(tint: store.mode.ringColor) {
                     VStack(alignment: .leading, spacing: 18) {
                         Text(text("Timer", "计时器"))
                             .font(.system(size: 19, weight: .bold, design: .rounded))
@@ -37,7 +38,7 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                GlassCard {
+                GlassCard(tint: .breakSage) {
                     VStack(alignment: .leading, spacing: 18) {
                         Text(text("Interface", "界面"))
                             .font(.system(size: 19, weight: .bold, design: .rounded))
@@ -68,7 +69,7 @@ struct SettingsView: View {
                 }
             }
 
-            GlassCard {
+            GlassCard(tint: store.mode.ringColor) {
                 HStack(spacing: 18) {
                     Image(systemName: "info.circle.fill")
                         .font(.system(size: 24, weight: .bold))

@@ -8,8 +8,8 @@ struct SidebarView: View {
         VStack(spacing: 18) {
             Image(systemName: "pawprint.circle.fill")
                 .font(.system(size: 32, weight: .semibold))
-                .foregroundStyle(Color.white, Color.focusTomato)
-                .shadow(color: Color.focusTomato.opacity(0.28), radius: 10, y: 4)
+                .foregroundStyle(Color.focusCream, Color.focusTomato)
+                .shadow(color: Color.focusTomato.opacity(0.24), radius: 10, y: 4)
                 .padding(.top, 28)
 
             VStack(spacing: 10) {
@@ -20,13 +20,13 @@ struct SidebarView: View {
                         Image(systemName: destination.symbolName)
                             .font(.system(size: 18, weight: .semibold))
                             .frame(width: 44, height: 44)
-                            .foregroundStyle(selection == destination ? Color.white : Color.secondary.opacity(0.86))
+                            .foregroundStyle(selection == destination ? Color.white : Color.focusInk.opacity(0.62))
                             .background {
                                 if selection == destination {
                                     Capsule()
                                         .fill(
                                             LinearGradient(
-                                                colors: [Color.focusTomato, Color.focusTomato.opacity(0.74)],
+                                                colors: [Color.focusTomato, Color.breakSage.opacity(0.9)],
                                                 startPoint: .topLeading,
                                                 endPoint: .bottomTrailing
                                             )
@@ -41,7 +41,7 @@ struct SidebarView: View {
                                         .fill(.ultraThinMaterial)
                                         .overlay {
                                             Capsule()
-                                                .strokeBorder(Color.white.opacity(0.24), lineWidth: 0.8)
+                                                .strokeBorder(Color.white.opacity(0.32), lineWidth: 0.8)
                                         }
                                 }
                             }
@@ -59,13 +59,14 @@ struct SidebarView: View {
                 .fill(.ultraThinMaterial)
                 .overlay {
                     Rectangle()
-                        .fill(Color.white.opacity(0.1))
+                        .fill(Color.focusCream.opacity(0.16))
                 }
                 .overlay {
                     LinearGradient(
                         colors: [
-                            Color.white.opacity(0.32),
-                            Color.focusTomato.opacity(0.08),
+                            Color.focusCream.opacity(0.34),
+                            Color.focusTomato.opacity(0.1),
+                            Color.breakSage.opacity(0.08),
                             Color.clear
                         ],
                         startPoint: .top,
@@ -77,7 +78,7 @@ struct SidebarView: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [.white.opacity(0.55), .white.opacity(0.12), .clear],
+                        colors: [.white.opacity(0.52), Color.breakSage.opacity(0.16), .clear],
                         startPoint: .top,
                         endPoint: .bottom
                     )

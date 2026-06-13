@@ -7,7 +7,8 @@ struct StatisticsView: View {
         VStack(alignment: .leading, spacing: 24) {
             PageHeader(
                 title: text("Statistics", "统计"),
-                subtitle: text("A focused snapshot of today's Pomodoro progress.", "快速查看今天的番茄钟进度。")
+                subtitle: text("A focused snapshot of today's Pomodoro progress.", "快速查看今天的番茄钟进度。"),
+                accent: store.mode.ringColor
             )
 
             HStack(spacing: 18) {
@@ -17,7 +18,7 @@ struct StatisticsView: View {
             }
 
             HStack(alignment: .top, spacing: 18) {
-                GlassCard {
+                GlassCard(tint: store.mode.ringColor) {
                     VStack(alignment: .leading, spacing: 16) {
                         Text(text("Daily Progress", "今日进度"))
                             .font(.system(size: 19, weight: .bold, design: .rounded))
@@ -33,7 +34,7 @@ struct StatisticsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
 
-                GlassCard {
+                GlassCard(tint: .breakSage) {
                     VStack(alignment: .leading, spacing: 14) {
                         Text(text("Session Mix", "时长配置"))
                             .font(.system(size: 19, weight: .bold, design: .rounded))
@@ -46,7 +47,7 @@ struct StatisticsView: View {
                 }
             }
 
-            GlassCard {
+            GlassCard(tint: store.mode.ringColor) {
                 VStack(alignment: .leading, spacing: 16) {
                     Text(text("This Week", "本周概览"))
                         .font(.system(size: 19, weight: .bold, design: .rounded))
@@ -66,7 +67,7 @@ struct StatisticsView: View {
     }
 
     private func metricCard(title: String, value: String, symbol: String, color: Color) -> some View {
-        GlassCard {
+        GlassCard(tint: color) {
             HStack(spacing: 14) {
                 Image(systemName: symbol)
                     .font(.system(size: 22, weight: .bold))

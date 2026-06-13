@@ -13,6 +13,7 @@ struct WindowGlassConfigurator: View {
 
     private func configure(_ window: NSWindow?) {
         guard let window else { return }
+        window.styleMask.insert(.fullSizeContentView)
         window.isOpaque = false
         window.backgroundColor = .clear
         window.titlebarAppearsTransparent = true

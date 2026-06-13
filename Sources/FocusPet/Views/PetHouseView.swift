@@ -9,7 +9,8 @@ struct PetHouseView: View {
             HStack {
                 PageHeader(
                     title: text("Pet House", "宠物屋"),
-                    subtitle: text("Pick a companion and preview every Pomodoro mood.", "选择伙伴，并预览每一种番茄钟状态。")
+                    subtitle: text("Pick a companion and preview every Pomodoro mood.", "选择伙伴，并预览每一种番茄钟状态。"),
+                    accent: store.mode.ringColor
                 )
 
                 Spacer()
@@ -33,7 +34,7 @@ struct PetHouseView: View {
                 stateCard(mode: .celebration, title: text("Celebration", "庆祝状态"), description: text("Confetti appears when a focus session finishes.", "专注结束后出现彩屑，一起庆祝完成。"))
             }
 
-            GlassCard {
+            GlassCard(tint: store.mode.ringColor) {
                 HStack(spacing: 18) {
                     PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
                         .frame(width: 128, height: 128)
@@ -69,7 +70,7 @@ struct PetHouseView: View {
     }
 
     private func stateCard(mode: PomodoroMode, title: String, description: String) -> some View {
-        GlassCard {
+        GlassCard(tint: mode.ringColor) {
             VStack(spacing: 14) {
                 PetView(pet: store.selectedPet, mode: mode, progress: mode == .celebration ? 1 : 0.62, compact: false)
                     .frame(width: 150, height: 150)

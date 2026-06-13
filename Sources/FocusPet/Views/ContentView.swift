@@ -27,27 +27,36 @@ struct ContentView: View {
         }
         .background {
             ZStack {
-                Rectangle().fill(Color(nsColor: .windowBackgroundColor).opacity(0.62))
+                Rectangle().fill(Color(nsColor: .windowBackgroundColor).opacity(0.5))
                 Rectangle().fill(.ultraThinMaterial)
-                Rectangle().fill(Color.white.opacity(0.22))
                 LinearGradient(
                     colors: [
+                        Color.focusCream.opacity(0.38),
+                        Color.focusMist.opacity(0.24),
                         store.mode.ringColor.opacity(0.12),
-                        Color.white.opacity(0.18),
-                        Color.breakSage.opacity(0.08),
-                        Color.white.opacity(0.08)
+                        Color.focusBlush.opacity(0.14)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 RadialGradient(
                     colors: [
-                        Color.white.opacity(0.28),
+                        store.mode.ringColor.opacity(0.2),
+                        Color.focusCream.opacity(0.18),
                         Color.clear
                     ],
-                    center: .topLeading,
-                    startRadius: 40,
-                    endRadius: 580
+                    center: .topTrailing,
+                    startRadius: 30,
+                    endRadius: 640
+                )
+                RadialGradient(
+                    colors: [
+                        Color.breakSage.opacity(0.16),
+                        Color.clear
+                    ],
+                    center: .bottomLeading,
+                    startRadius: 60,
+                    endRadius: 520
                 )
             }
             .ignoresSafeArea()
@@ -58,9 +67,9 @@ struct ContentView: View {
                 .strokeBorder(
                     LinearGradient(
                         colors: [
-                            .white.opacity(0.82),
+                            .white.opacity(0.72),
                             store.mode.ringColor.opacity(0.88),
-                            .white.opacity(0.24),
+                            Color.breakSage.opacity(0.3),
                             .black.opacity(0.08)
                         ],
                         startPoint: .topLeading,
@@ -68,6 +77,24 @@ struct ContentView: View {
                     ),
                     lineWidth: 1.4
                 )
+        }
+        .overlay(alignment: .top) {
+            Capsule()
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            store.mode.ringColor.opacity(0.95),
+                            .white.opacity(0.45),
+                            store.mode.ringColor.opacity(0.75)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .frame(height: 3)
+                .padding(.horizontal, 18)
+                .padding(.top, 2)
+                .shadow(color: store.mode.ringColor.opacity(0.55), radius: 6, y: 1)
         }
         .shadow(color: .black.opacity(0.16), radius: 30, y: 20)
         .shadow(color: store.mode.ringColor.opacity(0.18), radius: 24, y: 10)
