@@ -7,7 +7,7 @@ struct FloatingPetWidget: View {
 
     var body: some View {
         ZStack {
-            PetView(kind: store.selectedPet, mode: store.mode, progress: store.progress, compact: true)
+            PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: true)
                 .frame(width: 142, height: 142)
 
             VStack {

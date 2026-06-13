@@ -1,6 +1,6 @@
 # FocusPet
 
-FocusPet is a native macOS Pomodoro desktop companion built with SwiftUI and a small AppKit bridge. It provides a glassmorphism main dashboard, a floating desktop pet widget, bilingual UI copy, and switchable panda/cat companions.
+FocusPet is a native macOS Pomodoro desktop companion built with SwiftUI and a small AppKit bridge. It provides a glassmorphism main dashboard, a floating desktop pet widget, bilingual UI copy, built-in companions, and Codex Pets import support.
 
 ## Features
 
@@ -9,8 +9,18 @@ FocusPet is a native macOS Pomodoro desktop companion built with SwiftUI and a s
 - Main dashboard with sidebar navigation, task picker, pet selector, and language toggle.
 - Pet House, Statistics, and Settings pages for companion previews, progress snapshots, and timer preferences.
 - Floating pet mode using a transparent always-on-top AppKit panel.
-- Panda and cat vector pets with focus, break, and celebration states.
+- Panda, cat, and bundled Codex-style animated pets with focus, break, and celebration states.
+- Codex Pets import from `.codex-pet.zip`, unzipped pet folders, `pet.json`, or `spritesheet.webp`.
 - English and Chinese UI switching.
+
+## Import Codex Pets
+
+1. Open [codex-pets.net](https://codex-pets.net/), pick a pet, and download its sprite kit.
+2. In FocusPet, open Pet House or Settings.
+3. Click **Import Codex Pet**.
+4. Choose the downloaded `.codex-pet.zip`, an unzipped pet folder, `pet.json`, or `spritesheet.webp`.
+
+Imported pets are copied into the app support directory and immediately appear in every pet picker, including the dashboard and floating widget.
 
 ## Requirements
 
@@ -44,9 +54,9 @@ The Codex desktop Run action is wired to the same script through `.codex/environ
 ```text
 Sources/FocusPet/
   App/        App entry point and app delegate
-  Models/     Pet, timer mode, language, and sidebar enums
+  Models/     Pet, imported pet, timer mode, language, and sidebar models
   Stores/     TimerStore app state and Pomodoro timer logic
-  Services/   AppKit floating window controller
+  Services/   AppKit floating window controller and Codex pet importer
   Support/    Shared colors and window accessor helpers
   Views/      Dashboard, sidebar, pet, ring, and widget views
 ```

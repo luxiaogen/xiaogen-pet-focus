@@ -14,13 +14,17 @@ struct PetHouseView: View {
 
                 Spacer()
 
-                Picker(text("Pet", "宠物"), selection: $store.selectedPet) {
-                    ForEach(PetKind.allCases) { pet in
-                        Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
+                HStack(spacing: 10) {
+                    CodexPetImportButton(store: store, compact: true)
+
+                    Picker(text("Pet", "宠物"), selection: $store.selectedPetID) {
+                        ForEach(store.availablePets) { pet in
+                            Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet.id)
+                        }
                     }
+                    .pickerStyle(.menu)
+                    .frame(width: 190)
                 }
-                .pickerStyle(.menu)
-                .frame(width: 180)
             }
 
             HStack(alignment: .top, spacing: 18) {
@@ -31,7 +35,7 @@ struct PetHouseView: View {
 
             GlassCard {
                 HStack(spacing: 18) {
-                    PetView(kind: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
+                    PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
                         .frame(width: 128, height: 128)
 
                     VStack(alignment: .leading, spacing: 8) {
@@ -44,6 +48,8 @@ struct PetHouseView: View {
                     }
 
                     Spacer()
+
+                    CodexPetImportButton(store: store, compact: false)
 
                     Button {
                         enterFloatingMode()
@@ -65,7 +71,7 @@ struct PetHouseView: View {
     private func stateCard(mode: PomodoroMode, title: String, description: String) -> some View {
         GlassCard {
             VStack(spacing: 14) {
-                PetView(kind: store.selectedPet, mode: mode, progress: mode == .celebration ? 1 : 0.62, compact: false)
+                PetView(pet: store.selectedPet, mode: mode, progress: mode == .celebration ? 1 : 0.62, compact: false)
                     .frame(width: 150, height: 150)
 
                 VStack(spacing: 5) {

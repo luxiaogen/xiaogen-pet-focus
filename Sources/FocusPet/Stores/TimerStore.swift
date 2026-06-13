@@ -8,9 +8,12 @@ final class TimerStore: ObservableObject {
     @Published var mode: PomodoroMode = .focus
     @Published var isRunning = false
     @Published var selectedTask = "Design System Update"
-    @Published var selectedPet: PetKind = .panda
+    @Published var selectedPetID = PetProfile(kind: .panda).id
+    @Published private(set) var importedPets: [ImportedPet]
     @Published var language: AppLanguage = .english
     @Published private(set) var completedSessions = 0
+
+    private let petImportService = CodexPetImportService()
 
     let tasks = [
         "Design System Update",
@@ -18,6 +21,18 @@ final class TimerStore: ObservableObject {
         "Prototype Pet Motion",
         "Inbox Cleanup"
     ]
+
+    init() {
+        importedPets = petImportService.loadImportedPets()
+    }
+
+    var availablePets: [PetProfile] {
+        PetKind.allCases.map(PetProfile.init(kind:)) + importedPets.map(PetProfile.init(importedPet:))
+    }
+
+    var selectedPet: PetProfile {
+        availablePets.first { $0.id == selectedPetID } ?? PetProfile(kind: .panda)
+    }
 
     var localizedTasks: [String] {
         switch language {
@@ -124,6 +139,16 @@ final class TimerStore: ObservableObject {
     func localizedTaskTitle(for task: String) -> String {
         guard let index = tasks.firstIndex(of: task) else { return task }
         return localizedTasks[index]
+    }
+
+    @discardableResult
+    func importCodexPet(from url: URL) throws -> ImportedPet {
+        let importedPet = try petImportService.importPet(from: url)
+        importedPets.removeAll { $0.id == importedPet.id }
+        importedPets.append(importedPet)
+        importedPets.sort { $0.displayName.localizedCaseInsensitiveCompare($1.displayName) == .orderedAscending }
+        selectedPetID = importedPet.id
+        return importedPet
     }
 
     private func scheduleTimer() {

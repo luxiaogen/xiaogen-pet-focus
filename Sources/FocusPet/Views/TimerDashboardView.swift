@@ -73,13 +73,13 @@ struct TimerDashboardView: View {
             .frame(width: 126)
             .labelsHidden()
 
-            Picker(languageText("Pet", "宠物"), selection: $store.selectedPet) {
-                ForEach(PetKind.allCases) { pet in
-                    Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
+            Picker(languageText("Pet", "宠物"), selection: $store.selectedPetID) {
+                ForEach(store.availablePets) { pet in
+                    Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet.id)
                 }
             }
             .pickerStyle(.menu)
-            .frame(width: 150)
+            .frame(width: 170)
         }
     }
 
@@ -151,11 +151,7 @@ struct TimerDashboardView: View {
         }
         .padding(30)
         .frame(maxHeight: .infinity)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.glassStroke, lineWidth: 1)
-        }
+        .appleGlassSurface(cornerRadius: 22, tint: store.mode.ringColor, material: .regularMaterial)
     }
 
     private var modeControls: some View {
@@ -187,7 +183,7 @@ struct TimerDashboardView: View {
                     .foregroundStyle(store.mode.ringColor)
             }
 
-            PetView(kind: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
+            PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
                 .frame(width: 188, height: 188)
 
             VStack(spacing: 4) {
@@ -214,11 +210,7 @@ struct TimerDashboardView: View {
             }
         }
         .padding(22)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.glassStroke, lineWidth: 1)
-        }
+        .appleGlassSurface(cornerRadius: 22, tint: store.mode.ringColor, material: .regularMaterial)
     }
 
     private var statusText: String {
@@ -360,6 +352,10 @@ struct CapsuleGradientButtonStyle: ButtonStyle {
             .background {
                 Capsule()
                     .fill(LinearGradient(colors: [color, color.opacity(0.72)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(Color.white.opacity(0.55), lineWidth: 0.9)
+                    }
             }
             .shadow(color: color.opacity(configuration.isPressed ? 0.1 : 0.26), radius: 14, y: 8)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
@@ -370,10 +366,19 @@ struct GlassCapsuleButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .foregroundStyle(.primary)
-            .background(.thinMaterial, in: Capsule())
+            .background(.ultraThinMaterial, in: Capsule())
             .overlay {
-                Capsule().stroke(Color.glassStroke, lineWidth: 1)
+                Capsule()
+                    .strokeBorder(
+                        LinearGradient(
+                            colors: [.white.opacity(0.68), .white.opacity(0.18), .black.opacity(0.06)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        ),
+                        lineWidth: 1
+                    )
             }
+            .shadow(color: .black.opacity(0.06), radius: 9, y: 5)
             .scaleEffect(configuration.isPressed ? 0.98 : 1)
     }
 }
@@ -390,7 +395,11 @@ struct SmallModeButtonStyle: ButtonStyle {
             .padding(.vertical, 8)
             .background {
                 Capsule()
-                    .fill(isSelected ? color : Color.primary.opacity(0.08))
+                    .fill(isSelected ? color : Color.primary.opacity(0.06))
+                    .overlay {
+                        Capsule()
+                            .strokeBorder(Color.white.opacity(isSelected ? 0.42 : 0.22), lineWidth: 0.8)
+                    }
             }
             .scaleEffect(configuration.isPressed ? 0.97 : 1)
     }

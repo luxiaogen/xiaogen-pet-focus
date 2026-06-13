@@ -25,11 +25,7 @@ struct GlassCard<Content: View>: View {
     var body: some View {
         content
             .padding(22)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.glassStroke, lineWidth: 1)
-            }
+            .appleGlassSurface(cornerRadius: 20, tint: .primary, material: .regularMaterial)
     }
 }
 

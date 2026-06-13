@@ -2,25 +2,58 @@ import AppKit
 import SwiftUI
 
 struct PetView: View {
-    let kind: PetKind
+    let pet: PetProfile
     let mode: PomodoroMode
     let progress: Double
     let compact: Bool
     @State private var bob = false
+    @State private var isHovering = false
+    @State private var isPressed = false
+    @State private var showBurst = false
+    @State private var burstSeed = 0
 
     var body: some View {
         ZStack {
             Circle()
-                .fill(.thinMaterial)
+                .fill(.ultraThinMaterial)
                 .overlay {
                     Circle()
                         .fill(mode.ringColor.opacity(0.08))
                         .padding(compact ? 14 : 20)
                 }
+                .overlay {
+                    Circle()
+                        .strokeBorder(
+                            LinearGradient(
+                                colors: [
+                                    .white.opacity(0.8),
+                                    mode.ringColor.opacity(0.56),
+                                    .white.opacity(0.22),
+                                    .black.opacity(0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ),
+                            lineWidth: compact ? 1 : 1.4
+                        )
+                }
+                .overlay(alignment: .topLeading) {
+                    Circle()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: compact ? 34 : 52, height: compact ? 34 : 52)
+                        .blur(radius: compact ? 8 : 12)
+                        .offset(x: compact ? 22 : 34, y: compact ? 20 : 32)
+                }
                 .shadow(color: mode.ringColor.opacity(0.22), radius: compact ? 8 : 18, y: compact ? 4 : 10)
 
             CircularProgressRing(progress: progress, color: mode.ringColor)
                 .padding(compact ? 8 : 10)
+
+            if isHovering {
+                InteractionHintRing(color: mode.ringColor)
+                    .padding(compact ? 13 : 19)
+                    .transition(.opacity.combined(with: .scale(scale: 0.94)))
+            }
 
             if mode == .celebration {
                 ConfettiView()
@@ -28,22 +61,76 @@ struct PetView: View {
             }
 
             Group {
-                switch kind {
+                if let importedPet = pet.importedPet {
+                    CodexSpriteSheetPetImage(
+                        spritesheetURL: importedPet.spritesheetURL,
+                        mode: mode,
+                        isInteracting: isHovering || isPressed
+                    )
+                } else if let kind = pet.builtInKind {
+                    switch kind {
                 case .panda:
                     PandaSticker(mode: mode)
                 case .cat:
                     CatSticker(mode: mode)
                 case .doro, .feibi, .clawd, .gugugaga, .ikunchick:
-                    SpritePetImage(assetPrefix: kind.spriteAssetPrefix, frameCount: kind.spriteFrameCount, mode: mode)
+                    SpritePetImage(
+                        assetPrefix: kind.spriteAssetPrefix,
+                        frameCount: kind.spriteFrameCount,
+                        mode: mode,
+                        isInteracting: isHovering || isPressed
+                    )
+                    }
                 }
             }
             .padding(compact ? 16 : 22)
             .offset(y: bob ? -5 : 3)
+            .scaleEffect(petScale)
+            .rotationEffect(.degrees(isPressed ? -4 : 0))
             .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: bob)
+            .animation(.spring(response: 0.22, dampingFraction: 0.68), value: isHovering)
+            .animation(.spring(response: 0.2, dampingFraction: 0.55), value: isPressed)
+
+            if showBurst {
+                InteractionBurstView(seed: burstSeed)
+                    .padding(compact ? 4 : 8)
+                    .allowsHitTesting(false)
+                    .transition(.opacity.combined(with: .scale(scale: 0.72)))
+            }
+        }
+        .contentShape(Circle())
+        .onHover { hovering in
+            withAnimation(.spring(response: 0.24, dampingFraction: 0.78)) {
+                isHovering = hovering
+            }
+        }
+        .onTapGesture {
+            burstSeed += 1
+            withAnimation(.spring(response: 0.2, dampingFraction: 0.55)) {
+                isPressed = true
+                showBurst = true
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.16) {
+                withAnimation(.spring(response: 0.22, dampingFraction: 0.62)) {
+                    isPressed = false
+                }
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.72) {
+                withAnimation(.easeOut(duration: 0.18)) {
+                    showBurst = false
+                }
+            }
         }
         .onAppear {
             bob = true
         }
+    }
+
+    private var petScale: CGFloat {
+        if isPressed {
+            return compact ? 1.12 : 1.08
+        }
+        return isHovering ? 1.05 : 1
     }
 }
 
@@ -51,9 +138,10 @@ private struct SpritePetImage: View {
     let assetPrefix: String
     let frameCount: Int
     let mode: PomodoroMode
+    let isInteracting: Bool
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.18)) { timeline in
+        TimelineView(.periodic(from: .now, by: frameDuration)) { timeline in
             GeometryReader { proxy in
                 let size = min(proxy.size.width, proxy.size.height)
                 let frame = frameIndex(at: timeline.date)
@@ -77,9 +165,13 @@ private struct SpritePetImage: View {
         mode == .celebration ? 0.98 : 0.92
     }
 
+    private var frameDuration: TimeInterval {
+        isInteracting ? 0.1 : 0.18
+    }
+
     private func frameIndex(at date: Date) -> Int {
         guard frameCount > 0 else { return 0 }
-        return Int(date.timeIntervalSinceReferenceDate / 0.18) % frameCount
+        return Int(date.timeIntervalSinceReferenceDate / frameDuration) % frameCount
     }
 
     private func petImage(frame: Int) -> NSImage? {
@@ -87,6 +179,140 @@ private struct SpritePetImage: View {
             return nil
         }
         return NSImage(contentsOf: url)
+    }
+}
+
+private struct CodexSpriteSheetPetImage: View {
+    let spritesheetURL: URL
+    let mode: PomodoroMode
+    let isInteracting: Bool
+
+    var body: some View {
+        TimelineView(.periodic(from: .now, by: frameDuration)) { timeline in
+            GeometryReader { proxy in
+                let size = min(proxy.size.width, proxy.size.height)
+                let state = spriteState
+                let frame = frameIndex(at: timeline.date, frameCount: state.frames)
+
+                if let image = frameImage(row: state.row, frame: frame) {
+                    Image(nsImage: image)
+                        .resizable()
+                        .interpolation(.none)
+                        .scaledToFit()
+                        .frame(width: size * spriteScale, height: size * spriteScale)
+                        .rotationEffect(.degrees(mode == .celebration ? Double((frame % 3) - 1) * 3 : 0))
+                        .scaleEffect(mode == .celebration && frame % 2 == 0 ? 1.05 : 1)
+                        .shadow(color: .black.opacity(0.18), radius: size * 0.025, y: size * 0.018)
+                        .frame(width: proxy.size.width, height: proxy.size.height)
+                }
+            }
+        }
+    }
+
+    private var spriteState: CodexSpriteState {
+        if isInteracting && mode != .celebration {
+            return CodexSpriteState(row: 3, frames: 4)
+        }
+
+        switch mode {
+        case .focus:
+            return CodexSpriteState(row: 0, frames: 6)
+        case .breakTime:
+            return CodexSpriteState(row: 3, frames: 4)
+        case .celebration:
+            return CodexSpriteState(row: 4, frames: 5)
+        }
+    }
+
+    private var frameDuration: TimeInterval {
+        isInteracting ? 0.1 : 0.18
+    }
+
+    private var spriteScale: CGFloat {
+        mode == .celebration ? 1.0 : 0.94
+    }
+
+    private func frameIndex(at date: Date, frameCount: Int) -> Int {
+        guard frameCount > 0 else { return 0 }
+        return Int(date.timeIntervalSinceReferenceDate / frameDuration) % frameCount
+    }
+
+    private func frameImage(row: Int, frame: Int) -> NSImage? {
+        guard
+            let source = NSImage(contentsOf: spritesheetURL),
+            let cgImage = source.cgImage(forProposedRect: nil, context: nil, hints: nil)
+        else {
+            return nil
+        }
+
+        let cellWidth = max(1, cgImage.width / 8)
+        let cellHeight = max(1, cgImage.height / 9)
+        let safeRow = min(max(row, 0), 8)
+        let safeFrame = min(max(frame, 0), 7)
+        let rect = CGRect(
+            x: safeFrame * cellWidth,
+            y: safeRow * cellHeight,
+            width: cellWidth,
+            height: cellHeight
+        )
+
+        guard let cropped = cgImage.cropping(to: rect) else {
+            return nil
+        }
+        return NSImage(cgImage: cropped, size: NSSize(width: cellWidth, height: cellHeight))
+    }
+}
+
+private struct CodexSpriteState {
+    let row: Int
+    let frames: Int
+}
+
+private struct InteractionHintRing: View {
+    let color: Color
+
+    var body: some View {
+        TimelineView(.animation) { timeline in
+            let angle = timeline.date.timeIntervalSinceReferenceDate
+                .truncatingRemainder(dividingBy: 4) / 4 * 360
+
+            Circle()
+                .stroke(
+                    color.opacity(0.42),
+                    style: StrokeStyle(lineWidth: 2, lineCap: .round, dash: [7, 9])
+                )
+                .rotationEffect(.degrees(angle))
+                .shadow(color: color.opacity(0.35), radius: 8)
+        }
+    }
+}
+
+private struct InteractionBurstView: View {
+    let seed: Int
+    private let symbols = ["sparkle", "heart.fill", "pawprint.fill", "sparkles"]
+    private let colors: [Color] = [.focusTomato, .breakSage, .celebrationGold, .pink]
+
+    var body: some View {
+        GeometryReader { proxy in
+            ForEach(0..<8, id: \.self) { index in
+                Image(systemName: symbols[(index + seed) % symbols.count])
+                    .font(.system(size: max(CGFloat(11), proxy.size.width * 0.07), weight: .bold))
+                    .foregroundStyle(colors[(index + seed) % colors.count])
+                    .shadow(color: colors[(index + seed) % colors.count].opacity(0.36), radius: 6)
+                    .position(position(index: index, in: proxy.size))
+                    .scaleEffect(index.isMultiple(of: 2) ? 1.1 : 0.9)
+                    .rotationEffect(.degrees(Double(index * 19 + seed * 7)))
+            }
+        }
+    }
+
+    private func position(index: Int, in size: CGSize) -> CGPoint {
+        let radius = min(size.width, size.height) * 0.38
+        let angle = Double(index) / 8 * .pi * 2 + Double(seed).truncatingRemainder(dividingBy: 5) * 0.18
+        return CGPoint(
+            x: size.width / 2 + cos(angle) * radius,
+            y: size.height / 2 + sin(angle) * radius
+        )
     }
 }
 

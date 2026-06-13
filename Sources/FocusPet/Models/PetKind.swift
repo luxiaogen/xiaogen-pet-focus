@@ -75,3 +75,63 @@ enum PetKind: String, CaseIterable, Identifiable {
         }
     }
 }
+
+struct ImportedPet: Codable, Hashable, Identifiable {
+    let id: String
+    let codexID: String
+    let displayName: String
+    let description: String
+    let kind: String
+    let directoryName: String
+    let spritesheetFileName: String
+
+    var spritesheetURL: URL {
+        CodexPetImportService.importedPetsDirectory
+            .appendingPathComponent(directoryName, isDirectory: true)
+            .appendingPathComponent(spritesheetFileName, isDirectory: false)
+    }
+}
+
+struct PetProfile: Identifiable, Hashable {
+    let id: String
+    let displayName: String
+    let symbolName: String
+    let builtInKind: PetKind?
+    let importedPet: ImportedPet?
+
+    init(kind: PetKind) {
+        id = "builtin:\(kind.rawValue)"
+        displayName = kind.rawValue
+        symbolName = kind.symbolName
+        builtInKind = kind
+        importedPet = nil
+    }
+
+    init(importedPet: ImportedPet) {
+        id = importedPet.id
+        displayName = importedPet.displayName
+        symbolName = Self.symbolName(for: importedPet.kind)
+        builtInKind = nil
+        self.importedPet = importedPet
+    }
+
+    func title(in language: AppLanguage) -> String {
+        if let builtInKind {
+            return builtInKind.title(in: language)
+        }
+        return displayName
+    }
+
+    private static func symbolName(for kind: String) -> String {
+        switch kind.lowercased() {
+        case "animal":
+            "pawprint.fill"
+        case "person":
+            "person.crop.circle.fill"
+        case "creature":
+            "sparkles"
+        default:
+            "shippingbox.fill"
+        }
+    }
+}

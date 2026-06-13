@@ -49,12 +49,14 @@ struct SettingsView: View {
                         }
                         .pickerStyle(.segmented)
 
-                        Picker(text("Companion", "伙伴"), selection: $store.selectedPet) {
-                            ForEach(PetKind.allCases) { pet in
-                                Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet)
+                        Picker(text("Companion", "伙伴"), selection: $store.selectedPetID) {
+                            ForEach(store.availablePets) { pet in
+                                Label(pet.title(in: store.language), systemImage: pet.symbolName).tag(pet.id)
                             }
                         }
                         .pickerStyle(.menu)
+
+                        CodexPetImportButton(store: store, compact: false)
 
                         Picker(text("Default task", "默认任务"), selection: $store.selectedTask) {
                             ForEach(store.tasks, id: \.self) { task in
