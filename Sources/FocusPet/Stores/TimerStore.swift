@@ -99,6 +99,28 @@ final class TimerStore: ObservableObject {
         remainingSeconds = totalSeconds
     }
 
+    func setCurrentModeDuration(_ seconds: TimeInterval) {
+        let clampedSeconds = max(60, min(12 * 60 * 60, seconds.rounded()))
+        let shouldResume = isRunning
+        pause()
+
+        switch mode {
+        case .focus:
+            focusDuration = clampedSeconds
+        case .breakTime:
+            breakDuration = clampedSeconds
+        case .celebration:
+            mode = .focus
+            focusDuration = clampedSeconds
+        }
+
+        remainingSeconds = clampedSeconds
+
+        if shouldResume {
+            start()
+        }
+    }
+
     func localizedTaskTitle(for task: String) -> String {
         guard let index = tasks.firstIndex(of: task) else { return task }
         return localizedTasks[index]
