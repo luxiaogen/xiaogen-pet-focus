@@ -78,7 +78,7 @@ struct TimerDashboardView: View {
     }
 
     private var timerPanel: some View {
-        VStack(spacing: 26) {
+        VStack(spacing: 18) {
             Picker(languageText("Task", "任务"), selection: $store.selectedTask) {
                 ForEach(store.tasks, id: \.self) { task in
                     Text(store.localizedTaskTitle(for: task)).tag(task)
@@ -88,6 +88,7 @@ struct TimerDashboardView: View {
             .frame(width: 250)
 
             sessionPlanner
+            focusQueue
 
             ZStack {
                 CircularProgressRing(progress: store.progress, color: store.mode.ringColor)
@@ -203,6 +204,42 @@ struct TimerDashboardView: View {
         .overlay {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
                 .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
+        }
+    }
+
+    private var focusQueue: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack {
+                Text(languageText("Focus Queue", "专注队列"))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                Spacer()
+                Text("\(store.tasks.count)")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(.secondary)
+            }
+
+            HStack(spacing: 8) {
+                ForEach(store.tasks.prefix(3), id: \.self) { task in
+                    Button {
+                        store.selectedTask = task
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: store.selectedTask == task ? "checkmark.circle.fill" : "circle")
+                            Text(store.localizedTaskTitle(for: task))
+                                .lineLimit(1)
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(QueueTaskButtonStyle(isSelected: store.selectedTask == task, color: store.mode.ringColor))
+                    .help(store.localizedTaskTitle(for: task))
+                }
+            }
+        }
+        .padding(12)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.8)
         }
     }
 
@@ -485,16 +522,39 @@ private struct QuickDurationButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(isSelected ? Color.white : Color.primary)
+            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.78))
             .padding(.vertical, 7)
             .background {
                 Capsule()
-                    .fill(isSelected ? color : Color.primary.opacity(0.06))
+                    .fill(isSelected ? color : Color.white.opacity(0.22))
                     .overlay {
                         Capsule()
+                            .strokeBorder(Color.white.opacity(isSelected ? 0.42 : 0.28), lineWidth: 0.8)
+                    }
+            }
+            .shadow(color: isSelected ? color.opacity(0.22) : .clear, radius: 9, y: 5)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+    }
+}
+
+private struct QueueTaskButtonStyle: ButtonStyle {
+    let isSelected: Bool
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11, weight: .bold))
+            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.74))
+            .padding(.horizontal, 9)
+            .padding(.vertical, 7)
+            .background {
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(isSelected ? color : Color.white.opacity(0.18))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: 10, style: .continuous)
                             .strokeBorder(Color.white.opacity(isSelected ? 0.42 : 0.18), lineWidth: 0.8)
                     }
             }
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
     }
 }
