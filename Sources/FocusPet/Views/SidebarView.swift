@@ -6,14 +6,20 @@ struct SidebarView: View {
     @State private var hoveredDestination: SidebarDestination?
 
     var body: some View {
-        VStack(spacing: 18) {
-            Image(systemName: "pawprint.circle.fill")
-                .font(.system(size: 32, weight: .semibold))
-                .foregroundStyle(Color.focusCream, Color.focusTomato)
-                .shadow(color: Color.focusTomato.opacity(0.24), radius: 10, y: 4)
-                .padding(.top, 28)
+        VStack(spacing: 16) {
+            Image(systemName: "pawprint.fill")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundStyle(Color.focusTomato.opacity(0.72))
+                .frame(width: 40, height: 40)
+                .background(.ultraThinMaterial, in: Circle())
+                .overlay {
+                    Circle()
+                        .strokeBorder(Color.white.opacity(0.34), lineWidth: 0.8)
+                }
+                .shadow(color: Color.black.opacity(0.04), radius: 8, y: 4)
+                .padding(.top, 30)
 
-            VStack(spacing: 10) {
+            VStack(spacing: 12) {
                 ForEach(SidebarDestination.allCases) { destination in
                     let isSelected = selection == destination
                     let isHovered = hoveredDestination == destination
@@ -25,34 +31,22 @@ struct SidebarView: View {
                     } label: {
                         Image(systemName: destination.symbolName)
                             .font(.system(size: 18, weight: .semibold))
-                            .frame(width: 44, height: 44)
-                            .foregroundStyle(isSelected ? Color.white : Color.focusInk.opacity(isHovered ? 0.78 : 0.58))
+                            .frame(width: 42, height: 42)
+                            .foregroundStyle(isSelected ? Color.focusTomato.opacity(0.88) : Color.focusInk.opacity(isHovered ? 0.72 : 0.5))
                             .background {
-                                if isSelected {
-                                    Capsule()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [Color.focusTomato, Color.breakSage.opacity(0.9)],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
+                                Circle()
+                                    .fill(isSelected ? Color.white.opacity(0.34) : Color.white.opacity(isHovered ? 0.22 : 0.08))
+                                    .background(.ultraThinMaterial, in: Circle())
+                                    .overlay {
+                                        Circle()
+                                            .strokeBorder(
+                                                isSelected ? Color.focusTomato.opacity(0.38) : Color.white.opacity(isHovered ? 0.34 : 0.2),
+                                                lineWidth: 0.8
                                             )
-                                        )
-                                        .overlay {
-                                            Capsule()
-                                                .strokeBorder(Color.white.opacity(0.55), lineWidth: 0.8)
-                                        }
-                                        .shadow(color: Color.focusTomato.opacity(0.32), radius: 12, y: 7)
-                                } else {
-                                    Capsule()
-                                        .fill(isHovered ? Color.white.opacity(0.28) : Color.white.opacity(0.14))
-                                        .background(.ultraThinMaterial, in: Capsule())
-                                        .overlay {
-                                            Capsule()
-                                                .strokeBorder(Color.white.opacity(isHovered ? 0.42 : 0.28), lineWidth: 0.8)
-                                        }
-                                }
+                                    }
+                                    .shadow(color: isSelected ? Color.focusTomato.opacity(0.12) : .clear, radius: 8, y: 4)
                             }
-                            .scaleEffect(isHovered && !isSelected ? 1.04 : 1)
+                            .scaleEffect(isHovered && !isSelected ? 1.03 : 1)
                     }
                     .buttonStyle(.plain)
                     .help(destination.title(in: language))
@@ -72,14 +66,13 @@ struct SidebarView: View {
                 .fill(.ultraThinMaterial)
                 .overlay {
                     Rectangle()
-                        .fill(Color.focusCream.opacity(0.16))
+                        .fill(Color.focusCream.opacity(0.1))
                 }
                 .overlay {
                     LinearGradient(
                         colors: [
-                            Color.focusCream.opacity(0.34),
-                            Color.focusTomato.opacity(0.1),
-                            Color.breakSage.opacity(0.08),
+                            Color.white.opacity(0.22),
+                            Color.focusCream.opacity(0.12),
                             Color.clear
                         ],
                         startPoint: .top,
@@ -91,7 +84,7 @@ struct SidebarView: View {
             Rectangle()
                 .fill(
                     LinearGradient(
-                        colors: [.white.opacity(0.52), Color.breakSage.opacity(0.16), .clear],
+                        colors: [.white.opacity(0.34), .white.opacity(0.1), .clear],
                         startPoint: .top,
                         endPoint: .bottom
                     )

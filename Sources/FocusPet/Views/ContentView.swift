@@ -79,24 +79,6 @@ struct ContentView: View {
                     lineWidth: 1.4
                 )
         }
-        .overlay(alignment: .top) {
-            Capsule()
-                .fill(
-                    LinearGradient(
-                        colors: [
-                            store.mode.ringColor.opacity(0.95),
-                            .white.opacity(0.45),
-                            store.mode.ringColor.opacity(0.75)
-                        ],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .frame(height: 3)
-                .padding(.horizontal, 18)
-                .padding(.top, 2)
-                .shadow(color: store.mode.ringColor.opacity(0.55), radius: 6, y: 1)
-        }
         .shadow(color: .black.opacity(0.16), radius: 30, y: 20)
         .shadow(color: store.mode.ringColor.opacity(0.18), radius: 24, y: 10)
         .animation(.smooth(duration: 0.32), value: selectedDestination)
@@ -105,6 +87,7 @@ struct ContentView: View {
             WindowAccessor(window: $window).frame(width: 0, height: 0)
             WindowGlassConfigurator(window: window).frame(width: 0, height: 0)
         }
+        .ignoresSafeArea(.container, edges: .top)
     }
 
     private func enterFloatingMode() {
