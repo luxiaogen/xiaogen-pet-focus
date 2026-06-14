@@ -7,8 +7,8 @@ struct PetHouseView: View {
     @State private var careMood = 0.64
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+        FocusPetScrollPage {
+            VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
                 HStack {
                     PageHeader(
                         title: text("Pet House", "宠物屋"),
@@ -31,14 +31,17 @@ struct PetHouseView: View {
                     }
                 }
 
-                HStack(alignment: .top, spacing: 18) {
+                AdaptiveTriplet {
                     stateCard(mode: .focus, title: text("Focus State", "专注状态"), description: text("Glasses on. Your pet keeps quiet while you work.", "戴上眼镜，安静陪你进入专注。"))
+                } second: {
                     stateCard(mode: .breakTime, title: text("Break State", "休息状态"), description: text("Snack or play time. The ring turns sage green.", "吃点东西或玩一会儿，进度环变成鼠尾草绿。"))
+                } third: {
                     stateCard(mode: .celebration, title: text("Celebration", "庆祝状态"), description: text("Confetti appears when a focus session finishes.", "专注结束后出现彩屑，一起庆祝完成。"))
                 }
 
-                HStack(alignment: .top, spacing: 18) {
+                AdaptivePair {
                     careKitCard
+                } trailing: {
                     collectionCard
                 }
 
@@ -72,7 +75,6 @@ struct PetHouseView: View {
                     }
                 }
             }
-            .focusPetPagePadding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -80,11 +82,10 @@ struct PetHouseView: View {
     private var careKitCard: some View {
         GlassCard(tint: .breakSage) {
             VStack(alignment: .leading, spacing: 16) {
-                Text(text("Care Kit", "照顾工具"))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                FocusPetSectionTitle(title: text("Care Kit", "照顾工具"), symbol: "cross.case.fill", accent: .breakSage)
 
-                careMeter(title: text("Focus Energy", "专注能量"), value: careFocus, color: .breakSage)
-                careMeter(title: text("Mood", "心情"), value: careMood, color: store.mode.ringColor)
+                FocusPetProgressRow(title: text("Focus Energy", "专注能量"), value: careFocus, accent: .breakSage)
+                FocusPetProgressRow(title: text("Mood", "心情"), value: careMood, accent: store.mode.ringColor)
 
                 HStack(spacing: 10) {
                     careAction(title: text("Feed", "投喂"), symbol: "leaf.fill") {
@@ -106,12 +107,11 @@ struct PetHouseView: View {
     private var collectionCard: some View {
         GlassCard(tint: store.mode.ringColor) {
             VStack(alignment: .leading, spacing: 16) {
-                Text(text("Collection", "收藏"))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                FocusPetSectionTitle(title: text("Collection", "收藏"), symbol: "tray.full.fill", accent: store.mode.ringColor)
 
-                collectionRow(title: text("Built-in pets", "内置宠物"), value: "\(PetKind.allCases.count)", symbol: "pawprint.fill")
-                collectionRow(title: text("Imported pets", "导入宠物"), value: "\(store.importedPets.count)", symbol: "square.and.arrow.down.fill")
-                collectionRow(title: text("Active companion", "当前伙伴"), value: store.selectedPet.title(in: store.language), symbol: store.selectedPet.symbolName)
+                FocusPetInfoRow(title: text("Built-in pets", "内置宠物"), value: "\(PetKind.allCases.count)", symbol: "pawprint.fill", accent: store.mode.ringColor)
+                FocusPetInfoRow(title: text("Imported pets", "导入宠物"), value: "\(store.importedPets.count)", symbol: "square.and.arrow.down.fill", accent: store.mode.ringColor)
+                FocusPetInfoRow(title: text("Active companion", "当前伙伴"), value: store.selectedPet.title(in: store.language), symbol: store.selectedPet.symbolName, accent: store.mode.ringColor)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -137,22 +137,6 @@ struct PetHouseView: View {
         }
     }
 
-    private func careMeter(title: String, value: Double, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack {
-                Text(title)
-                Spacer()
-                Text("\(Int(value * 100))%")
-                    .fontWeight(.bold)
-            }
-            .font(.system(size: 13, weight: .medium))
-            .foregroundStyle(.secondary)
-
-            ProgressView(value: value)
-                .tint(color)
-        }
-    }
-
     private func careAction(title: String, symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Label(title, systemImage: symbol)
@@ -161,24 +145,6 @@ struct PetHouseView: View {
                 .padding(.vertical, 8)
         }
         .buttonStyle(GlassCapsuleButtonStyle())
-    }
-
-    private func collectionRow(title: String, value: String, symbol: String) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: symbol)
-                .foregroundStyle(store.mode.ringColor)
-                .frame(width: 24)
-
-            Text(title)
-                .foregroundStyle(.secondary)
-
-            Spacer()
-
-            Text(value)
-                .fontWeight(.bold)
-                .lineLimit(1)
-        }
-        .font(.system(size: 13, weight: .medium))
     }
 
     private func text(_ english: String, _ chinese: String) -> String {

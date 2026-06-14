@@ -7,12 +7,12 @@ struct TimerDashboardView: View {
     @FocusState private var isTimerInputFocused: Bool
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 24) {
+        VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
             header
 
             GeometryReader { proxy in
                 if proxy.size.width >= 900 {
-                    HStack(alignment: .top, spacing: 24) {
+                    HStack(alignment: .top, spacing: FocusPetLayout.sectionSpacing) {
                         timerPanel
                             .frame(minWidth: 560, maxWidth: .infinity, maxHeight: .infinity)
 
@@ -22,7 +22,7 @@ struct TimerDashboardView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
                     ScrollView {
-                        VStack(spacing: 18) {
+                        VStack(spacing: FocusPetLayout.cardSpacing) {
                             timerPanel
                                 .frame(maxWidth: .infinity, minHeight: 620)
 
@@ -34,7 +34,7 @@ struct TimerDashboardView: View {
                 }
             }
         }
-        .padding(32)
+        .padding(FocusPetLayout.pagePadding)
         .onAppear {
             timerInput = store.formattedRemaining
         }
@@ -71,13 +71,17 @@ struct TimerDashboardView: View {
 
     private var timerPanel: some View {
         VStack(spacing: 18) {
-            Picker(languageText("Task", "任务"), selection: $store.selectedTask) {
-                ForEach(store.tasks, id: \.self) { task in
-                    Text(store.localizedTaskTitle(for: task)).tag(task)
+            HStack {
+                FocusPetSectionTitle(title: languageText("Timer", "计时器"), symbol: "timer", accent: store.mode.ringColor)
+
+                Picker(languageText("Task", "任务"), selection: $store.selectedTask) {
+                    ForEach(store.tasks, id: \.self) { task in
+                        Text(store.localizedTaskTitle(for: task)).tag(task)
+                    }
                 }
+                .pickerStyle(.menu)
+                .frame(width: 240)
             }
-            .pickerStyle(.menu)
-            .frame(width: 250)
 
             sessionPlanner
             focusQueue
@@ -140,14 +144,7 @@ struct TimerDashboardView: View {
         }
         .padding(30)
         .frame(maxHeight: .infinity)
-        .appleGlassSurface(cornerRadius: 24, tint: store.mode.ringColor, material: .regularMaterial)
-        .overlay(alignment: .topLeading) {
-            Capsule()
-                .fill(store.mode.ringColor.opacity(0.62))
-                .frame(width: 38, height: 4)
-                .padding(20)
-        }
-        .clipped()
+        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor, material: .regularMaterial)
     }
 
     private var modeControls: some View {
@@ -170,80 +167,69 @@ struct TimerDashboardView: View {
     }
 
     private var sessionPlanner: some View {
-        HStack(spacing: 12) {
-            VStack(alignment: .leading, spacing: 7) {
-                Text(languageText("Session Plan", "本轮计划"))
-                    .font(.system(size: 14, weight: .bold, design: .rounded))
-                Text(store.localizedTaskTitle(for: store.selectedTask))
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            ForEach([15, 25, 45], id: \.self) { minutes in
-                Button {
-                    store.setCurrentModeDuration(TimeInterval(minutes * 60))
-                } label: {
-                    Text("\(minutes)m")
-                        .frame(width: 46)
+        FocusPetSoftPanel {
+            HStack(spacing: 12) {
+                VStack(alignment: .leading, spacing: 7) {
+                    Text(languageText("Session Plan", "本轮计划"))
+                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                    Text(store.localizedTaskTitle(for: store.selectedTask))
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
                 }
-                .buttonStyle(QuickDurationButtonStyle(isSelected: Int(store.totalSeconds / 60) == minutes, color: store.mode.ringColor))
-                .help(languageText("Set timer to \(minutes) minutes", "设置为 \(minutes) 分钟"))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                ForEach([15, 25, 45], id: \.self) { minutes in
+                    Button {
+                        store.setCurrentModeDuration(TimeInterval(minutes * 60))
+                    } label: {
+                        Text("\(minutes)m")
+                            .frame(width: 46)
+                    }
+                    .buttonStyle(QuickDurationButtonStyle(isSelected: Int(store.totalSeconds / 60) == minutes, color: store.mode.ringColor))
+                    .help(languageText("Set timer to \(minutes) minutes", "设置为 \(minutes) 分钟"))
+                }
             }
-        }
-        .padding(12)
-        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
         }
     }
 
     private var focusQueue: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            HStack {
-                Text(languageText("Focus Queue", "专注队列"))
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
-                Spacer()
-                Text("\(store.tasks.count)")
-                    .font(.system(size: 11, weight: .bold))
-                    .foregroundStyle(.secondary)
-            }
+        FocusPetSoftPanel {
+            VStack(alignment: .leading, spacing: 10) {
+                HStack {
+                    Text(languageText("Focus Queue", "专注队列"))
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                    Spacer()
+                    Text("\(store.tasks.count)")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.secondary)
+                        .contentTransition(.numericText())
+                }
 
-            HStack(spacing: 8) {
-                ForEach(store.tasks.prefix(3), id: \.self) { task in
-                    Button {
-                        store.selectedTask = task
-                    } label: {
-                        HStack(spacing: 5) {
-                            Image(systemName: store.selectedTask == task ? "checkmark.circle.fill" : "circle")
-                            Text(store.localizedTaskTitle(for: task))
-                                .lineLimit(1)
+                HStack(spacing: 8) {
+                    ForEach(store.tasks.prefix(3), id: \.self) { task in
+                        Button {
+                            store.selectedTask = task
+                        } label: {
+                            HStack(spacing: 5) {
+                                Image(systemName: store.selectedTask == task ? "checkmark.circle.fill" : "circle")
+                                Text(store.localizedTaskTitle(for: task))
+                                    .lineLimit(1)
+                            }
+                            .frame(maxWidth: .infinity)
                         }
-                        .frame(maxWidth: .infinity)
+                        .buttonStyle(QueueTaskButtonStyle(isSelected: store.selectedTask == task, color: store.mode.ringColor))
+                        .help(store.localizedTaskTitle(for: task))
                     }
-                    .buttonStyle(QueueTaskButtonStyle(isSelected: store.selectedTask == task, color: store.mode.ringColor))
-                    .help(store.localizedTaskTitle(for: task))
                 }
             }
-        }
-        .padding(12)
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.8)
         }
     }
 
     private var companionPanel: some View {
         VStack(spacing: 20) {
             HStack {
-                Text(languageText("Companion", "专注伙伴"))
-                    .font(.system(size: 20, weight: .bold, design: .rounded))
-                Spacer()
-                Image(systemName: "sparkles")
-                    .foregroundStyle(store.mode.ringColor)
+                FocusPetSectionTitle(title: languageText("Companion", "专注伙伴"), symbol: "sparkles", accent: store.mode.ringColor)
             }
 
             PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
@@ -275,45 +261,18 @@ struct TimerDashboardView: View {
             }
         }
         .padding(22)
-        .appleGlassSurface(cornerRadius: 24, tint: store.mode.ringColor, material: .regularMaterial)
-        .overlay(alignment: .topLeading) {
-            Capsule()
-                .fill(store.mode.ringColor.opacity(0.62))
-                .frame(width: 34, height: 4)
-                .padding(18)
-        }
-        .clipped()
+        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor, material: .regularMaterial)
     }
 
     private var companionCareModule: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text(languageText("Care Status", "照顾状态"))
-                .font(.system(size: 13, weight: .bold, design: .rounded))
+        FocusPetSoftPanel {
+            VStack(alignment: .leading, spacing: 10) {
+                Text(languageText("Care Status", "照顾状态"))
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
 
-            careRow(label: languageText("Energy", "能量"), value: store.isRunning ? 0.68 : 0.86, color: .breakSage)
-            careRow(label: languageText("Bond", "亲密度"), value: min(1, 0.42 + Double(store.completedSessions) * 0.12), color: store.mode.ringColor)
-        }
-        .padding(12)
-        .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
-        }
-    }
-
-    private func careRow(label: String, value: Double, color: Color) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack {
-                Text(label)
-                Spacer()
-                Text("\(Int(value * 100))%")
-                    .fontWeight(.bold)
+                FocusPetProgressRow(title: languageText("Energy", "能量"), value: store.isRunning ? 0.68 : 0.86, accent: .breakSage)
+                FocusPetProgressRow(title: languageText("Bond", "亲密度"), value: min(1, 0.42 + Double(store.completedSessions) * 0.12), accent: store.mode.ringColor)
             }
-            .font(.system(size: 11, weight: .medium))
-            .foregroundStyle(.secondary)
-
-            ProgressView(value: value)
-                .tint(color)
         }
     }
 

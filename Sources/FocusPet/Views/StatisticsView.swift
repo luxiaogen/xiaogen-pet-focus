@@ -4,25 +4,26 @@ struct StatisticsView: View {
     @ObservedObject var store: TimerStore
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+        FocusPetScrollPage {
+            VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
                 PageHeader(
                     title: text("Statistics", "统计"),
                     subtitle: text("A focused snapshot of today's Pomodoro progress.", "快速查看今天的番茄钟进度。"),
                     accent: store.mode.ringColor
                 )
 
-                HStack(spacing: 18) {
+                AdaptiveTriplet {
                     metricCard(title: text("Completed", "已完成"), value: "\(store.completedSessions)", symbol: "checkmark.circle.fill", color: .breakSage)
+                } second: {
                     metricCard(title: text("Daily Goal", "今日目标"), value: "\(store.completedSessions) / 4", symbol: "flag.fill", color: .focusTomato)
+                } third: {
                     metricCard(title: text("Current Mode", "当前模式"), value: store.mode.title(in: store.language), symbol: "timer", color: store.mode.ringColor)
                 }
 
-                HStack(alignment: .top, spacing: 18) {
+                AdaptivePair {
                     GlassCard(tint: store.mode.ringColor) {
                         VStack(alignment: .leading, spacing: 16) {
-                            Text(text("Daily Progress", "今日进度"))
-                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                            FocusPetSectionTitle(title: text("Daily Progress", "今日进度"), symbol: "chart.line.uptrend.xyaxis", accent: store.mode.ringColor)
 
                             ProgressView(value: min(Double(store.completedSessions) / 4, 1))
                                 .tint(store.mode.ringColor)
@@ -34,29 +35,28 @@ struct StatisticsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-
+                } trailing: {
                     GlassCard(tint: .breakSage) {
                         VStack(alignment: .leading, spacing: 14) {
-                            Text(text("Session Mix", "时长配置"))
-                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                            FocusPetSectionTitle(title: text("Session Mix", "时长配置"), symbol: "slider.horizontal.3", accent: .breakSage)
 
-                            statRow(label: text("Focus length", "专注时长"), value: durationText(store.focusDuration))
-                            statRow(label: text("Break length", "休息时长"), value: durationText(store.breakDuration))
-                            statRow(label: text("Selected task", "当前任务"), value: store.localizedTaskTitle(for: store.selectedTask))
+                            FocusPetInfoRow(title: text("Focus length", "专注时长"), value: durationText(store.focusDuration), symbol: "timer", accent: .breakSage)
+                            FocusPetInfoRow(title: text("Break length", "休息时长"), value: durationText(store.breakDuration), symbol: "cup.and.saucer.fill", accent: .breakSage)
+                            FocusPetInfoRow(title: text("Selected task", "当前任务"), value: store.localizedTaskTitle(for: store.selectedTask), symbol: "checklist", accent: .breakSage)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
 
-                HStack(alignment: .top, spacing: 18) {
+                AdaptivePair {
                     insightCard
+                } trailing: {
                     streakCard
                 }
 
                 GlassCard(tint: store.mode.ringColor) {
                     VStack(alignment: .leading, spacing: 16) {
-                        Text(text("This Week", "本周概览"))
-                            .font(.system(size: 19, weight: .bold, design: .rounded))
+                        FocusPetSectionTitle(title: text("This Week", "本周概览"), symbol: "calendar", accent: store.mode.ringColor)
 
                         HStack(alignment: .bottom, spacing: 12) {
                             ForEach(0..<7, id: \.self) { index in
@@ -67,7 +67,6 @@ struct StatisticsView: View {
                     }
                 }
             }
-            .focusPetPagePadding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -75,12 +74,11 @@ struct StatisticsView: View {
     private var insightCard: some View {
         GlassCard(tint: .celebrationGold) {
             VStack(alignment: .leading, spacing: 14) {
-                Text(text("Focus Insight", "专注洞察"))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                FocusPetSectionTitle(title: text("Focus Insight", "专注洞察"), symbol: "lightbulb.fill", accent: .celebrationGold)
 
-                statRow(label: text("Focused minutes", "已专注分钟"), value: durationText(TimeInterval(store.completedSessions) * store.focusDuration))
-                statRow(label: text("Goal completion", "目标完成度"), value: "\(Int(min(Double(store.completedSessions) / 4, 1) * 100))%")
-                statRow(label: text("Next milestone", "下个里程碑"), value: nextMilestoneText)
+                FocusPetInfoRow(title: text("Focused minutes", "已专注分钟"), value: durationText(TimeInterval(store.completedSessions) * store.focusDuration), symbol: "clock.fill", accent: .celebrationGold)
+                FocusPetInfoRow(title: text("Goal completion", "目标完成度"), value: "\(Int(min(Double(store.completedSessions) / 4, 1) * 100))%", symbol: "target", accent: .celebrationGold)
+                FocusPetInfoRow(title: text("Next milestone", "下个里程碑"), value: nextMilestoneText, symbol: "flag.fill", accent: .celebrationGold)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -89,8 +87,7 @@ struct StatisticsView: View {
     private var streakCard: some View {
         GlassCard(tint: .breakSage) {
             VStack(alignment: .leading, spacing: 14) {
-                Text(text("Streak", "连续记录"))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                FocusPetSectionTitle(title: text("Streak", "连续记录"), symbol: "flame.fill", accent: .breakSage)
 
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text("\(min(store.completedSessions, 4))")
@@ -125,35 +122,7 @@ struct StatisticsView: View {
     }
 
     private func metricCard(title: String, value: String, symbol: String, color: Color) -> some View {
-        GlassCard(tint: color) {
-            HStack(spacing: 14) {
-                Image(systemName: symbol)
-                    .font(.system(size: 22, weight: .bold))
-                    .foregroundStyle(color)
-                    .frame(width: 42, height: 42)
-                    .background(color.opacity(0.13), in: Circle())
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(title)
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundStyle(.secondary)
-                    Text(value)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                }
-                Spacer()
-            }
-        }
-    }
-
-    private func statRow(label: String, value: String) -> some View {
-        HStack {
-            Text(label)
-                .foregroundStyle(.secondary)
-            Spacer()
-            Text(value)
-                .fontWeight(.semibold)
-        }
-        .font(.system(size: 14))
+        FocusPetMetricTile(title: title, value: value, symbol: symbol, accent: color)
     }
 
     private func weekBar(index: Int) -> some View {

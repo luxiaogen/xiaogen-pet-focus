@@ -24,6 +24,7 @@ struct ContentView: View {
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .transition(.opacity.combined(with: .scale(scale: 0.985)))
         }
         .background {
             ZStack {
@@ -98,6 +99,8 @@ struct ContentView: View {
         }
         .shadow(color: .black.opacity(0.16), radius: 30, y: 20)
         .shadow(color: store.mode.ringColor.opacity(0.18), radius: 24, y: 10)
+        .animation(.smooth(duration: 0.32), value: selectedDestination)
+        .animation(.smooth(duration: 0.42), value: store.mode)
         .background {
             WindowAccessor(window: $window).frame(width: 0, height: 0)
             WindowGlassConfigurator(window: window).frame(width: 0, height: 0)

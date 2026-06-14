@@ -8,26 +8,25 @@ struct SettingsView: View {
     @AppStorage("settings.compactDashboard") private var compactDashboard = false
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 24) {
+        FocusPetScrollPage {
+            VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
                 PageHeader(
                     title: text("Settings", "设置"),
                     subtitle: text("Tune the FocusPet session and interface defaults.", "调整 FocusPet 的番茄钟和界面偏好。"),
                     accent: store.mode.ringColor
                 )
 
-                HStack(alignment: .top, spacing: 18) {
+                AdaptivePair {
                     GlassCard(tint: store.mode.ringColor) {
                         VStack(alignment: .leading, spacing: 18) {
-                            Text(text("Timer", "计时器"))
-                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                            FocusPetSectionTitle(title: text("Timer", "计时器"), symbol: "timer", accent: store.mode.ringColor)
 
                             Stepper(value: focusMinutes, in: 5...60, step: 5) {
-                                settingRow(title: text("Focus duration", "专注时长"), value: "\(Int(store.focusDuration / 60)) min")
+                                FocusPetInfoRow(title: text("Focus duration", "专注时长"), value: "\(Int(store.focusDuration / 60)) min", symbol: "bolt.fill", accent: store.mode.ringColor)
                             }
 
                             Stepper(value: breakMinutes, in: 1...30, step: 1) {
-                                settingRow(title: text("Break duration", "休息时长"), value: "\(Int(store.breakDuration / 60)) min")
+                                FocusPetInfoRow(title: text("Break duration", "休息时长"), value: "\(Int(store.breakDuration / 60)) min", symbol: "leaf.fill", accent: .breakSage)
                             }
 
                             Button {
@@ -42,11 +41,10 @@ struct SettingsView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-
+                } trailing: {
                     GlassCard(tint: .breakSage) {
                         VStack(alignment: .leading, spacing: 18) {
-                            Text(text("Interface", "界面"))
-                                .font(.system(size: 19, weight: .bold, design: .rounded))
+                            FocusPetSectionTitle(title: text("Interface", "界面"), symbol: "paintpalette.fill", accent: .breakSage)
 
                             Picker(text("Language", "语言"), selection: $store.language) {
                                 ForEach(AppLanguage.allCases) { language in
@@ -74,8 +72,9 @@ struct SettingsView: View {
                     }
                 }
 
-                HStack(alignment: .top, spacing: 18) {
+                AdaptivePair {
                     remindersCard
+                } trailing: {
                     displayCard
                 }
 
@@ -91,7 +90,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            .focusPetPagePadding()
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -110,15 +108,14 @@ struct SettingsView: View {
     private var remindersCard: some View {
         GlassCard(tint: .celebrationGold) {
             VStack(alignment: .leading, spacing: 18) {
-                Text(text("Reminders", "提醒"))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                FocusPetSectionTitle(title: text("Reminders", "提醒"), symbol: "bell.badge.fill", accent: .celebrationGold)
 
                 Toggle(isOn: $soundCuesEnabled) {
-                    settingRow(title: text("Sound cues", "声音提示"), value: soundCuesEnabled ? text("On", "开启") : text("Off", "关闭"))
+                    FocusPetInfoRow(title: text("Sound cues", "声音提示"), value: soundCuesEnabled ? text("On", "开启") : text("Off", "关闭"), symbol: "speaker.wave.2.fill", accent: .celebrationGold)
                 }
 
                 Toggle(isOn: $autoStartBreak) {
-                    settingRow(title: text("Auto-start break", "自动开始休息"), value: autoStartBreak ? text("On", "开启") : text("Manual", "手动"))
+                    FocusPetInfoRow(title: text("Auto-start break", "自动开始休息"), value: autoStartBreak ? text("On", "开启") : text("Manual", "手动"), symbol: "play.circle.fill", accent: .celebrationGold)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -128,15 +125,14 @@ struct SettingsView: View {
     private var displayCard: some View {
         GlassCard(tint: store.mode.ringColor) {
             VStack(alignment: .leading, spacing: 18) {
-                Text(text("Display", "显示"))
-                    .font(.system(size: 19, weight: .bold, design: .rounded))
+                FocusPetSectionTitle(title: text("Display", "显示"), symbol: "display", accent: store.mode.ringColor)
 
                 Toggle(isOn: $showProgressGlow) {
-                    settingRow(title: text("Progress glow", "进度光效"), value: showProgressGlow ? text("On", "开启") : text("Off", "关闭"))
+                    FocusPetInfoRow(title: text("Progress glow", "进度光效"), value: showProgressGlow ? text("On", "开启") : text("Off", "关闭"), symbol: "sparkles", accent: store.mode.ringColor)
                 }
 
                 Toggle(isOn: $compactDashboard) {
-                    settingRow(title: text("Compact dashboard", "紧凑仪表盘"), value: compactDashboard ? text("Compact", "紧凑") : text("Comfort", "舒适"))
+                    FocusPetInfoRow(title: text("Compact dashboard", "紧凑仪表盘"), value: compactDashboard ? text("Compact", "紧凑") : text("Comfort", "舒适"), symbol: "rectangle.compress.vertical", accent: store.mode.ringColor)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -152,17 +148,6 @@ struct SettingsView: View {
                 store.resetCurrentMode()
             }
         }
-    }
-
-    private func settingRow(title: String, value: String) -> some View {
-        HStack {
-            Text(title)
-            Spacer()
-            Text(value)
-                .fontWeight(.semibold)
-                .foregroundStyle(.secondary)
-        }
-        .font(.system(size: 14, weight: .medium))
     }
 
     private func text(_ english: String, _ chinese: String) -> String {

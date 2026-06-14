@@ -3,6 +3,7 @@ import SwiftUI
 struct SidebarView: View {
     @Binding var selection: SidebarDestination
     let language: AppLanguage
+    @State private var hoveredDestination: SidebarDestination?
 
     var body: some View {
         VStack(spacing: 18) {
@@ -14,15 +15,20 @@ struct SidebarView: View {
 
             VStack(spacing: 10) {
                 ForEach(SidebarDestination.allCases) { destination in
+                    let isSelected = selection == destination
+                    let isHovered = hoveredDestination == destination
+
                     Button {
-                        selection = destination
+                        withAnimation(.smooth(duration: 0.2)) {
+                            selection = destination
+                        }
                     } label: {
                         Image(systemName: destination.symbolName)
                             .font(.system(size: 18, weight: .semibold))
                             .frame(width: 44, height: 44)
-                            .foregroundStyle(selection == destination ? Color.white : Color.focusInk.opacity(0.62))
+                            .foregroundStyle(isSelected ? Color.white : Color.focusInk.opacity(isHovered ? 0.78 : 0.58))
                             .background {
-                                if selection == destination {
+                                if isSelected {
                                     Capsule()
                                         .fill(
                                             LinearGradient(
@@ -38,16 +44,23 @@ struct SidebarView: View {
                                         .shadow(color: Color.focusTomato.opacity(0.32), radius: 12, y: 7)
                                 } else {
                                     Capsule()
-                                        .fill(.ultraThinMaterial)
+                                        .fill(isHovered ? Color.white.opacity(0.28) : Color.white.opacity(0.14))
+                                        .background(.ultraThinMaterial, in: Capsule())
                                         .overlay {
                                             Capsule()
-                                                .strokeBorder(Color.white.opacity(0.32), lineWidth: 0.8)
+                                                .strokeBorder(Color.white.opacity(isHovered ? 0.42 : 0.28), lineWidth: 0.8)
                                         }
                                 }
                             }
+                            .scaleEffect(isHovered && !isSelected ? 1.04 : 1)
                     }
                     .buttonStyle(.plain)
                     .help(destination.title(in: language))
+                    .onHover { isHovering in
+                        withAnimation(.smooth(duration: 0.16)) {
+                            hoveredDestination = isHovering ? destination : nil
+                        }
+                    }
                 }
             }
 
@@ -85,5 +98,6 @@ struct SidebarView: View {
                 )
                 .frame(width: 1)
         }
+        .animation(.smooth(duration: 0.28), value: selection)
     }
 }
