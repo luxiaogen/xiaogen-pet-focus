@@ -3,10 +3,6 @@ import SwiftUI
 struct TimerDashboardView: View {
     @ObservedObject var store: TimerStore
     let enterFloatingMode: () -> Void
-    @AppStorage("timerDashboard.timerPanelX") private var timerPanelX = 0.43
-    @AppStorage("timerDashboard.timerPanelY") private var timerPanelY = 0.54
-    @AppStorage("timerDashboard.companionPanelX") private var companionPanelX = 0.84
-    @AppStorage("timerDashboard.companionPanelY") private var companionPanelY = 0.54
     @State private var timerInput = ""
     @FocusState private var isTimerInputFocused: Bool
 
@@ -15,31 +11,27 @@ struct TimerDashboardView: View {
             header
 
             GeometryReader { proxy in
-                let timerSize = panelSize(for: proxy.size, preferredWidth: 640, minimumWidth: 460)
-                let companionSize = CGSize(width: min(290, max(250, proxy.size.width * 0.24)), height: timerSize.height)
-
-                ZStack {
-                    DraggableDashboardPanel(
-                        normalizedX: $timerPanelX,
-                        normalizedY: $timerPanelY,
-                        containerSize: proxy.size,
-                        panelSize: timerSize,
-                        dragHelp: languageText("Drag to arrange", "拖动调整布局")
-                    ) {
+                if proxy.size.width >= 900 {
+                    HStack(alignment: .top, spacing: 24) {
                         timerPanel
-                    }
+                            .frame(minWidth: 560, maxWidth: .infinity, maxHeight: .infinity)
 
-                    DraggableDashboardPanel(
-                        normalizedX: $companionPanelX,
-                        normalizedY: $companionPanelY,
-                        containerSize: proxy.size,
-                        panelSize: companionSize,
-                        dragHelp: languageText("Drag to arrange", "拖动调整布局")
-                    ) {
                         companionPanel
+                            .frame(width: min(310, max(270, proxy.size.width * 0.26)), height: proxy.size.height)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
+                } else {
+                    ScrollView {
+                        VStack(spacing: 18) {
+                            timerPanel
+                                .frame(maxWidth: .infinity, minHeight: 620)
+
+                            companionPanel
+                                .frame(maxWidth: .infinity, minHeight: 430)
+                        }
+                        .frame(maxWidth: .infinity, alignment: .top)
                     }
                 }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
         .padding(32)
@@ -155,6 +147,7 @@ struct TimerDashboardView: View {
                 .frame(width: 38, height: 4)
                 .padding(20)
         }
+        .clipped()
     }
 
     private var modeControls: some View {
@@ -289,6 +282,7 @@ struct TimerDashboardView: View {
                 .frame(width: 34, height: 4)
                 .padding(18)
         }
+        .clipped()
     }
 
     private var companionCareModule: some View {
@@ -338,12 +332,6 @@ struct TimerDashboardView: View {
         store.language == .chinese ? chinese : english
     }
 
-    private func panelSize(for containerSize: CGSize, preferredWidth: CGFloat, minimumWidth: CGFloat) -> CGSize {
-        let width = min(preferredWidth, max(minimumWidth, containerSize.width * 0.52))
-        let height = min(max(500, containerSize.height - 4), max(380, containerSize.height))
-        return CGSize(width: width, height: height)
-    }
-
     private func commitTimerInput() {
         guard let seconds = seconds(from: timerInput) else {
             timerInput = store.formattedRemaining
@@ -380,76 +368,6 @@ struct TimerDashboardView: View {
         default:
             return nil
         }
-    }
-}
-
-private struct DraggableDashboardPanel<Content: View>: View {
-    @Binding var normalizedX: Double
-    @Binding var normalizedY: Double
-    let containerSize: CGSize
-    let panelSize: CGSize
-    let dragHelp: String
-    @ViewBuilder let content: Content
-    @GestureState private var dragTranslation: CGSize = .zero
-
-    var body: some View {
-        content
-            .frame(width: panelSize.width, height: panelSize.height)
-            .overlay(alignment: .topLeading) {
-                Image(systemName: "arrow.up.and.down.and.arrow.left.and.right")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(.primary.opacity(0.72))
-                    .frame(width: 28, height: 28)
-                    .background(.ultraThinMaterial, in: Circle())
-                    .overlay {
-                        Circle().stroke(Color.white.opacity(0.32), lineWidth: 0.8)
-                    }
-                    .padding(12)
-                    .contentShape(Circle())
-                    .help(dragHelp)
-                    .gesture(dragGesture)
-            }
-            .position(currentPosition)
-            .animation(.spring(response: 0.28, dampingFraction: 0.86), value: dragTranslation)
-    }
-
-    private var currentPosition: CGPoint {
-        clampedPosition(
-            x: normalizedX * containerSize.width + dragTranslation.width,
-            y: normalizedY * containerSize.height + dragTranslation.height
-        )
-    }
-
-    private var dragGesture: some Gesture {
-        DragGesture()
-            .updating($dragTranslation) { value, state, _ in
-                state = value.translation
-            }
-            .onEnded { value in
-                let newPosition = clampedPosition(
-                    x: normalizedX * containerSize.width + value.translation.width,
-                    y: normalizedY * containerSize.height + value.translation.height
-                )
-                normalizedX = normalized(newPosition.x, in: containerSize.width)
-                normalizedY = normalized(newPosition.y, in: containerSize.height)
-            }
-    }
-
-    private func clampedPosition(x: CGFloat, y: CGFloat) -> CGPoint {
-        CGPoint(
-            x: clamp(x, minimum: panelSize.width / 2, maximum: containerSize.width - panelSize.width / 2),
-            y: clamp(y, minimum: panelSize.height / 2, maximum: containerSize.height - panelSize.height / 2)
-        )
-    }
-
-    private func normalized(_ value: CGFloat, in length: CGFloat) -> Double {
-        guard length > 0 else { return 0.5 }
-        return Double(value / length)
-    }
-
-    private func clamp(_ value: CGFloat, minimum: CGFloat, maximum: CGFloat) -> CGFloat {
-        guard minimum <= maximum else { return (minimum + maximum) / 2 }
-        return min(max(value, minimum), maximum)
     }
 }
 
