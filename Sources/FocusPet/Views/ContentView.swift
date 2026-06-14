@@ -9,7 +9,7 @@ struct ContentView: View {
     var body: some View {
         HStack(spacing: 0) {
             SidebarView(selection: $selectedDestination, language: store.language)
-                .frame(width: 92)
+                .frame(width: 72)
 
             Group {
                 switch selectedDestination {
