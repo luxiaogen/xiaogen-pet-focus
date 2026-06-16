@@ -14,7 +14,7 @@ struct PageHeader: View {
     let subtitle: String
     let accent: Color
 
-    init(title: String, subtitle: String, accent: Color = .focusTomato) {
+    init(title: String, subtitle: String, accent: Color) {
         self.title = title
         self.subtitle = subtitle
         self.accent = accent

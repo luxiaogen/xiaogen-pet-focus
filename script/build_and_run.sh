@@ -17,6 +17,14 @@ INFO_PLIST="$APP_CONTENTS/Info.plist"
 
 pkill -x "$APP_NAME" >/dev/null 2>&1 || true
 
+# Regenerate the app icon if the source art or icns is missing.
+if [[ ! -f "$ROOT_DIR/AppIcon.icns" || "$ROOT_DIR/AppIcon-source.png" -nt "$ROOT_DIR/AppIcon.icns" ]]; then
+  if [[ ! -f "$ROOT_DIR/AppIcon-source.png" ]]; then
+    python3 "$ROOT_DIR/script/generate_app_icon.py"
+  fi
+  "$ROOT_DIR/script/build_app_icon.sh"
+fi
+
 swift build
 BUILD_BINARY="$(swift build --show-bin-path)/$APP_NAME"
 
@@ -28,6 +36,11 @@ chmod +x "$APP_BINARY"
 RESOURCE_BUNDLE="$(dirname "$BUILD_BINARY")/${APP_NAME}_${APP_NAME}.bundle"
 if [ -d "$RESOURCE_BUNDLE" ]; then
   cp -R "$RESOURCE_BUNDLE" "$APP_RESOURCES/"
+fi
+
+# App icon
+if [[ -f "$ROOT_DIR/AppIcon.icns" ]]; then
+  cp "$ROOT_DIR/AppIcon.icns" "$APP_RESOURCES/AppIcon.icns"
 fi
 
 cat >"$INFO_PLIST" <<PLIST
@@ -43,6 +56,12 @@ cat >"$INFO_PLIST" <<PLIST
   <string>$APP_NAME</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
+  <key>CFBundleVersion</key>
+  <string>1</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
   <key>LSMinimumSystemVersion</key>
   <string>$MIN_SYSTEM_VERSION</string>
   <key>NSPrincipalClass</key>
@@ -50,6 +69,9 @@ cat >"$INFO_PLIST" <<PLIST
 </dict>
 </plist>
 PLIST
+
+# Touch the bundle so Finder/LaunchServices refreshes the icon cache.
+touch "$APP_BUNDLE"
 
 open_app() {
   /usr/bin/open -n "$APP_BUNDLE"

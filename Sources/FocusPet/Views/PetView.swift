@@ -6,11 +6,13 @@ struct PetView: View {
     let mode: PomodoroMode
     let progress: Double
     let compact: Bool
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     @State private var bob = false
     @State private var isHovering = false
     @State private var isPressed = false
     @State private var showBurst = false
     @State private var burstSeed = 0
+    @State private var isVisible = true
 
     var body: some View {
         ZStack {
@@ -18,7 +20,7 @@ struct PetView: View {
                 .fill(.ultraThinMaterial)
                 .overlay {
                     Circle()
-                        .fill(mode.ringColor.opacity(0.08))
+                        .fill(mode.ringColor(in: theme).opacity(0.08))
                         .padding(compact ? 14 : 20)
                 }
                 .overlay {
@@ -27,7 +29,7 @@ struct PetView: View {
                             LinearGradient(
                                 colors: [
                                     .white.opacity(0.8),
-                                    mode.ringColor.opacity(0.56),
+                                    mode.ringColor(in: theme).opacity(0.56),
                                     .white.opacity(0.22),
                                     .black.opacity(0.08)
                                 ],
@@ -44,13 +46,13 @@ struct PetView: View {
                         .blur(radius: compact ? 8 : 12)
                         .offset(x: compact ? 22 : 34, y: compact ? 20 : 32)
                 }
-                .shadow(color: mode.ringColor.opacity(0.22), radius: compact ? 8 : 18, y: compact ? 4 : 10)
+                .shadow(color: mode.ringColor(in: theme).opacity(0.22), radius: compact ? 8 : 18, y: compact ? 4 : 10)
 
-            CircularProgressRing(progress: progress, color: mode.ringColor)
+            CircularProgressRing(progress: progress, color: mode.ringColor(in: theme))
                 .padding(compact ? 8 : 10)
 
             if isHovering {
-                InteractionHintRing(color: mode.ringColor)
+                InteractionHintRing(color: mode.ringColor(in: theme))
                     .padding(compact ? 13 : 19)
                     .transition(.opacity.combined(with: .scale(scale: 0.94)))
             }
@@ -65,7 +67,8 @@ struct PetView: View {
                     CodexSpriteSheetPetImage(
                         spritesheetURL: importedPet.spritesheetURL,
                         mode: mode,
-                        isInteracting: isHovering || isPressed
+                        isInteracting: isHovering || isPressed,
+                        isAnimating: isVisible
                     )
                 } else if let kind = pet.builtInKind {
                     switch kind {
@@ -78,7 +81,8 @@ struct PetView: View {
                         assetPrefix: kind.spriteAssetPrefix,
                         frameCount: kind.spriteFrameCount,
                         mode: mode,
-                        isInteracting: isHovering || isPressed
+                        isInteracting: isHovering || isPressed,
+                        isAnimating: isVisible
                     )
                     }
                 }
@@ -87,7 +91,7 @@ struct PetView: View {
             .offset(y: bob ? -5 : 3)
             .scaleEffect(petScale)
             .rotationEffect(.degrees(isPressed ? -4 : 0))
-            .animation(.easeInOut(duration: 1.5).repeatForever(autoreverses: true), value: bob)
+            .animation(isVisible ? .easeInOut(duration: 1.5).repeatForever(autoreverses: true) : nil, value: bob)
             .animation(.spring(response: 0.22, dampingFraction: 0.68), value: isHovering)
             .animation(.spring(response: 0.2, dampingFraction: 0.55), value: isPressed)
 
@@ -124,6 +128,8 @@ struct PetView: View {
         .onAppear {
             bob = true
         }
+        .onAppear { isVisible = true }
+        .onDisappear { isVisible = false }
     }
 
     private var petScale: CGFloat {
@@ -139,25 +145,39 @@ private struct SpritePetImage: View {
     let frameCount: Int
     let mode: PomodoroMode
     let isInteracting: Bool
+    let isAnimating: Bool
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: frameDuration)) { timeline in
-            GeometryReader { proxy in
-                let size = min(proxy.size.width, proxy.size.height)
-                let frame = frameIndex(at: timeline.date)
-
-                if let image = petImage(frame: frame) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .interpolation(.none)
-                        .scaledToFit()
-                        .frame(width: size * spriteScale, height: size * spriteScale)
-                        .rotationEffect(.degrees(mode == .celebration ? Double((frame % 3) - 1) * 4 : 0))
-                        .scaleEffect(mode == .celebration && frame % 2 == 0 ? 1.04 : 1)
-                        .shadow(color: .black.opacity(0.18), radius: size * 0.025, y: size * 0.018)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
+        Group {
+            if isAnimating {
+                TimelineView(.periodic(from: .now, by: frameDuration)) { timeline in
+                    GeometryReader { proxy in
+                        let size = min(proxy.size.width, proxy.size.height)
+                        let frame = frameIndex(at: timeline.date)
+                        spriteContent(image: petImage(frame: frame), size: size, frame: frame, proxy: proxy)
+                    }
+                }
+            } else {
+                GeometryReader { proxy in
+                    let size = min(proxy.size.width, proxy.size.height)
+                    spriteContent(image: petImage(frame: 0), size: size, frame: 0, proxy: proxy)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func spriteContent(image: NSImage?, size: CGFloat, frame: Int, proxy: GeometryProxy) -> some View {
+        if let image {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.none)
+                .scaledToFit()
+                .frame(width: size * spriteScale, height: size * spriteScale)
+                .rotationEffect(.degrees(mode == .celebration ? Double((frame % 3) - 1) * 4 : 0))
+                .scaleEffect(mode == .celebration && frame % 2 == 0 ? 1.04 : 1)
+                .shadow(color: .black.opacity(0.18), radius: size * 0.025, y: size * 0.018)
+                .frame(width: proxy.size.width, height: proxy.size.height)
         }
     }
 
@@ -175,10 +195,7 @@ private struct SpritePetImage: View {
     }
 
     private func petImage(frame: Int) -> NSImage? {
-        guard let url = Bundle.module.url(forResource: "\(assetPrefix)_\(frame)", withExtension: "png") else {
-            return nil
-        }
-        return NSImage(contentsOf: url)
+        PetSpriteCache.shared.cachedFrame(prefix: assetPrefix, frame: frame)
     }
 }
 
@@ -186,26 +203,41 @@ private struct CodexSpriteSheetPetImage: View {
     let spritesheetURL: URL
     let mode: PomodoroMode
     let isInteracting: Bool
+    let isAnimating: Bool
 
     var body: some View {
-        TimelineView(.periodic(from: .now, by: frameDuration)) { timeline in
-            GeometryReader { proxy in
-                let size = min(proxy.size.width, proxy.size.height)
-                let state = spriteState
-                let frame = frameIndex(at: timeline.date, frameCount: state.frames)
-
-                if let image = frameImage(row: state.row, frame: frame) {
-                    Image(nsImage: image)
-                        .resizable()
-                        .interpolation(.none)
-                        .scaledToFit()
-                        .frame(width: size * spriteScale, height: size * spriteScale)
-                        .rotationEffect(.degrees(mode == .celebration ? Double((frame % 3) - 1) * 3 : 0))
-                        .scaleEffect(mode == .celebration && frame % 2 == 0 ? 1.05 : 1)
-                        .shadow(color: .black.opacity(0.18), radius: size * 0.025, y: size * 0.018)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
+        Group {
+            if isAnimating {
+                TimelineView(.periodic(from: .now, by: frameDuration)) { timeline in
+                    GeometryReader { proxy in
+                        let size = min(proxy.size.width, proxy.size.height)
+                        let state = spriteState
+                        let frame = frameIndex(at: timeline.date, frameCount: state.frames)
+                        spriteContent(image: frameImage(row: state.row, frame: frame), size: size, frame: frame, proxy: proxy)
+                    }
+                }
+            } else {
+                GeometryReader { proxy in
+                    let size = min(proxy.size.width, proxy.size.height)
+                    let state = spriteState
+                    spriteContent(image: frameImage(row: state.row, frame: 0), size: size, frame: 0, proxy: proxy)
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func spriteContent(image: NSImage?, size: CGFloat, frame: Int, proxy: GeometryProxy) -> some View {
+        if let image {
+            Image(nsImage: image)
+                .resizable()
+                .interpolation(.none)
+                .scaledToFit()
+                .frame(width: size * spriteScale, height: size * spriteScale)
+                .rotationEffect(.degrees(mode == .celebration ? Double((frame % 3) - 1) * 3 : 0))
+                .scaleEffect(mode == .celebration && frame % 2 == 0 ? 1.05 : 1)
+                .shadow(color: .black.opacity(0.18), radius: size * 0.025, y: size * 0.018)
+                .frame(width: proxy.size.width, height: proxy.size.height)
         }
     }
 
@@ -238,28 +270,12 @@ private struct CodexSpriteSheetPetImage: View {
     }
 
     private func frameImage(row: Int, frame: Int) -> NSImage? {
-        guard
-            let source = NSImage(contentsOf: spritesheetURL),
-            let cgImage = source.cgImage(forProposedRect: nil, context: nil, hints: nil)
-        else {
+        guard let cell = PetSpriteCache.shared.cachedSpritesheetCell(url: spritesheetURL, row: row, column: frame) else {
             return nil
         }
-
-        let cellWidth = max(1, cgImage.width / 8)
-        let cellHeight = max(1, cgImage.height / 9)
-        let safeRow = min(max(row, 0), 8)
-        let safeFrame = min(max(frame, 0), 7)
-        let rect = CGRect(
-            x: safeFrame * cellWidth,
-            y: safeRow * cellHeight,
-            width: cellWidth,
-            height: cellHeight
-        )
-
-        guard let cropped = cgImage.cropping(to: rect) else {
-            return nil
-        }
-        return NSImage(cgImage: cropped, size: NSSize(width: cellWidth, height: cellHeight))
+        let cellWidth = cell.width
+        let cellHeight = cell.height
+        return NSImage(cgImage: cell, size: NSSize(width: cellWidth, height: cellHeight))
     }
 }
 
@@ -288,9 +304,10 @@ private struct InteractionHintRing: View {
 }
 
 private struct InteractionBurstView: View {
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     let seed: Int
     private let symbols = ["sparkle", "heart.fill", "pawprint.fill", "sparkles"]
-    private let colors: [Color] = [.focusTomato, .breakSage, .celebrationGold, .pink]
+    private var colors: [Color] { [theme.accentColor, theme.breakColor, .celebrationGold, .pink] }
 
     var body: some View {
         GeometryReader { proxy in
@@ -546,11 +563,12 @@ private struct TinyLaptop: View {
 }
 
 private struct BreakBubble: View {
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     let size: CGFloat
 
     var body: some View {
         Circle()
-            .fill(Color.breakSage.gradient)
+            .fill(theme.breakColor.gradient)
             .frame(width: size * 0.2, height: size * 0.2)
             .overlay {
                 Image(systemName: "leaf.fill")
@@ -564,11 +582,12 @@ private struct BreakBubble: View {
 }
 
 private struct PartyHat: View {
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     let size: CGFloat
 
     var body: some View {
         Triangle()
-            .fill(LinearGradient(colors: [.celebrationGold, .focusTomato], startPoint: .top, endPoint: .bottom))
+            .fill(LinearGradient(colors: [.celebrationGold, theme.accentColor], startPoint: .top, endPoint: .bottom))
             .frame(width: size * 0.24, height: size * 0.32)
             .overlay {
                 Triangle()
@@ -585,7 +604,8 @@ private struct PartyHat: View {
 }
 
 private struct ConfettiView: View {
-    private let colors: [Color] = [.focusTomato, .breakSage, .celebrationGold, .blue, .pink]
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
+    private var colors: [Color] { [theme.accentColor, theme.breakColor, .celebrationGold, .blue, .pink] }
 
     var body: some View {
         GeometryReader { proxy in

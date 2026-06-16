@@ -2,6 +2,7 @@ import SwiftUI
 
 struct PetHouseView: View {
     @ObservedObject var store: TimerStore
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     let enterFloatingMode: () -> Void
     @State private var careFocus = 0.72
     @State private var careMood = 0.64
@@ -13,7 +14,7 @@ struct PetHouseView: View {
                     PageHeader(
                         title: text("Pet House", "宠物屋"),
                         subtitle: text("Pick a companion and preview every Pomodoro mood.", "选择伙伴，并预览每一种番茄钟状态。"),
-                        accent: store.mode.ringColor
+                        accent: store.mode.ringColor(in: theme)
                     )
 
                     Spacer()
@@ -45,7 +46,7 @@ struct PetHouseView: View {
                     collectionCard
                 }
 
-                GlassCard(tint: store.mode.ringColor) {
+                GlassCard(tint: store.mode.ringColor(in: theme)) {
                     HStack(spacing: 18) {
                         PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
                             .frame(width: 128, height: 128)
@@ -71,7 +72,7 @@ struct PetHouseView: View {
                                 .padding(.horizontal, 18)
                                 .padding(.vertical, 12)
                         }
-                        .buttonStyle(CapsuleGradientButtonStyle(color: store.mode.ringColor))
+                        .buttonStyle(CapsuleGradientButtonStyle(color: store.mode.ringColor(in: theme)))
                     }
                 }
             }
@@ -80,12 +81,12 @@ struct PetHouseView: View {
     }
 
     private var careKitCard: some View {
-        GlassCard(tint: .breakSage) {
+        GlassCard(tint: theme.breakColor) {
             VStack(alignment: .leading, spacing: 16) {
-                FocusPetSectionTitle(title: text("Care Kit", "照顾工具"), symbol: "cross.case.fill", accent: .breakSage)
+                FocusPetSectionTitle(title: text("Care Kit", "照顾工具"), symbol: "cross.case.fill", accent: theme.breakColor)
 
-                FocusPetProgressRow(title: text("Focus Energy", "专注能量"), value: careFocus, accent: .breakSage)
-                FocusPetProgressRow(title: text("Mood", "心情"), value: careMood, accent: store.mode.ringColor)
+                FocusPetProgressRow(title: text("Focus Energy", "专注能量"), value: careFocus, accent: theme.breakColor)
+                FocusPetProgressRow(title: text("Mood", "心情"), value: careMood, accent: store.mode.ringColor(in: theme))
 
                 HStack(spacing: 10) {
                     careAction(title: text("Feed", "投喂"), symbol: "leaf.fill") {
@@ -105,20 +106,20 @@ struct PetHouseView: View {
     }
 
     private var collectionCard: some View {
-        GlassCard(tint: store.mode.ringColor) {
+        GlassCard(tint: store.mode.ringColor(in: theme)) {
             VStack(alignment: .leading, spacing: 16) {
-                FocusPetSectionTitle(title: text("Collection", "收藏"), symbol: "tray.full.fill", accent: store.mode.ringColor)
+                FocusPetSectionTitle(title: text("Collection", "收藏"), symbol: "tray.full.fill", accent: store.mode.ringColor(in: theme))
 
-                FocusPetInfoRow(title: text("Built-in pets", "内置宠物"), value: "\(PetKind.allCases.count)", symbol: "pawprint.fill", accent: store.mode.ringColor)
-                FocusPetInfoRow(title: text("Imported pets", "导入宠物"), value: "\(store.importedPets.count)", symbol: "square.and.arrow.down.fill", accent: store.mode.ringColor)
-                FocusPetInfoRow(title: text("Active companion", "当前伙伴"), value: store.selectedPet.title(in: store.language), symbol: store.selectedPet.symbolName, accent: store.mode.ringColor)
+                FocusPetInfoRow(title: text("Built-in pets", "内置宠物"), value: "\(PetKind.allCases.count)", symbol: "pawprint.fill", accent: store.mode.ringColor(in: theme))
+                FocusPetInfoRow(title: text("Imported pets", "导入宠物"), value: "\(store.importedPets.count)", symbol: "square.and.arrow.down.fill", accent: store.mode.ringColor(in: theme))
+                FocusPetInfoRow(title: text("Active companion", "当前伙伴"), value: store.selectedPet.title(in: store.language), symbol: store.selectedPet.symbolName, accent: store.mode.ringColor(in: theme))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 
     private func stateCard(mode: PomodoroMode, title: String, description: String) -> some View {
-        GlassCard(tint: mode.ringColor) {
+        GlassCard(tint: mode.ringColor(in: theme)) {
             VStack(spacing: 14) {
                 PetView(pet: store.selectedPet, mode: mode, progress: mode == .celebration ? 1 : 0.62, compact: false)
                     .frame(width: 150, height: 150)

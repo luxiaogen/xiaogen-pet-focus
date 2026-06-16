@@ -2,6 +2,7 @@ import SwiftUI
 
 struct FloatingPetWidget: View {
     @ObservedObject var store: TimerStore
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     let onExpand: () -> Void
     @State private var isHovering = false
 
@@ -57,7 +58,7 @@ struct FloatingPetWidget: View {
                 Image(systemName: store.isRunning ? "pause.fill" : "play.fill")
                     .frame(width: 26, height: 26)
             }
-            .buttonStyle(FloatingControlButtonStyle(color: store.mode.ringColor))
+            .buttonStyle(FloatingControlButtonStyle(color: store.mode.ringColor(in: theme)))
             .help(store.isRunning ? languageText("Pause", "暂停") : languageText("Play", "播放"))
 
             Button {

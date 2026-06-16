@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var store: TimerStore
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     @AppStorage("settings.soundCuesEnabled") private var soundCuesEnabled = true
     @AppStorage("settings.autoStartBreak") private var autoStartBreak = false
     @AppStorage("settings.showProgressGlow") private var showProgressGlow = true
@@ -13,20 +14,20 @@ struct SettingsView: View {
                 PageHeader(
                     title: text("Settings", "设置"),
                     subtitle: text("Tune the FocusPet session and interface defaults.", "调整 FocusPet 的番茄钟和界面偏好。"),
-                    accent: store.mode.ringColor
+                    accent: store.mode.ringColor(in: theme)
                 )
 
                 AdaptivePair {
-                    GlassCard(tint: store.mode.ringColor) {
+                    GlassCard(tint: store.mode.ringColor(in: theme)) {
                         VStack(alignment: .leading, spacing: 18) {
-                            FocusPetSectionTitle(title: text("Timer", "计时器"), symbol: "timer", accent: store.mode.ringColor)
+                            FocusPetSectionTitle(title: text("Timer", "计时器"), symbol: "timer", accent: store.mode.ringColor(in: theme))
 
                             Stepper(value: focusMinutes, in: 5...60, step: 5) {
-                                FocusPetInfoRow(title: text("Focus duration", "专注时长"), value: "\(Int(store.focusDuration / 60)) min", symbol: "bolt.fill", accent: store.mode.ringColor)
+                                FocusPetInfoRow(title: text("Focus duration", "专注时长"), value: "\(Int(store.focusDuration / 60)) min", symbol: "bolt.fill", accent: store.mode.ringColor(in: theme))
                             }
 
                             Stepper(value: breakMinutes, in: 1...30, step: 1) {
-                                FocusPetInfoRow(title: text("Break duration", "休息时长"), value: "\(Int(store.breakDuration / 60)) min", symbol: "leaf.fill", accent: .breakSage)
+                                FocusPetInfoRow(title: text("Break duration", "休息时长"), value: "\(Int(store.breakDuration / 60)) min", symbol: "leaf.fill", accent: theme.breakColor)
                             }
 
                             Button {
@@ -42,13 +43,20 @@ struct SettingsView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 } trailing: {
-                    GlassCard(tint: .breakSage) {
+                    GlassCard(tint: theme.breakColor) {
                         VStack(alignment: .leading, spacing: 18) {
-                            FocusPetSectionTitle(title: text("Interface", "界面"), symbol: "paintpalette.fill", accent: .breakSage)
+                            FocusPetSectionTitle(title: text("Interface", "界面"), symbol: "paintpalette.fill", accent: theme.breakColor)
 
                             Picker(text("Language", "语言"), selection: $store.language) {
                                 ForEach(AppLanguage.allCases) { language in
                                     Text(language.shortTitle).tag(language)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+
+                            Picker(text("Theme", "主题"), selection: $theme) {
+                                ForEach(AppTheme.allCases) { t in
+                                    Text(t.title(in: store.language)).tag(t)
                                 }
                             }
                             .pickerStyle(.segmented)
@@ -62,9 +70,9 @@ struct SettingsView: View {
 
                             CodexPetImportButton(store: store, compact: false)
 
-                            Picker(text("Default task", "默认任务"), selection: $store.selectedTask) {
-                                ForEach(store.tasks, id: \.self) { task in
-                                    Text(store.localizedTaskTitle(for: task)).tag(task)
+                            Picker(text("Default task", "默认任务"), selection: $store.selectedTaskID) {
+                                ForEach(store.tasks) { task in
+                                    Text(store.localizedTaskTitle(for: task.id)).tag(task.id)
                                 }
                             }
                         }
@@ -78,11 +86,11 @@ struct SettingsView: View {
                     displayCard
                 }
 
-                GlassCard(tint: store.mode.ringColor) {
+                GlassCard(tint: store.mode.ringColor(in: theme)) {
                     HStack(spacing: 18) {
                         Image(systemName: "info.circle.fill")
                             .font(.system(size: 24, weight: .bold))
-                            .foregroundStyle(store.mode.ringColor)
+                            .foregroundStyle(store.mode.ringColor(in: theme))
                         Text(text("Settings are applied immediately. Interface preferences are remembered on this Mac.", "设置会立即应用，界面偏好会保存在这台 Mac 上。"))
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.secondary)
@@ -123,16 +131,16 @@ struct SettingsView: View {
     }
 
     private var displayCard: some View {
-        GlassCard(tint: store.mode.ringColor) {
+        GlassCard(tint: store.mode.ringColor(in: theme)) {
             VStack(alignment: .leading, spacing: 18) {
-                FocusPetSectionTitle(title: text("Display", "显示"), symbol: "display", accent: store.mode.ringColor)
+                FocusPetSectionTitle(title: text("Display", "显示"), symbol: "display", accent: store.mode.ringColor(in: theme))
 
                 Toggle(isOn: $showProgressGlow) {
-                    FocusPetInfoRow(title: text("Progress glow", "进度光效"), value: showProgressGlow ? text("On", "开启") : text("Off", "关闭"), symbol: "sparkles", accent: store.mode.ringColor)
+                    FocusPetInfoRow(title: text("Progress glow", "进度光效"), value: showProgressGlow ? text("On", "开启") : text("Off", "关闭"), symbol: "sparkles", accent: store.mode.ringColor(in: theme))
                 }
 
                 Toggle(isOn: $compactDashboard) {
-                    FocusPetInfoRow(title: text("Compact dashboard", "紧凑仪表盘"), value: compactDashboard ? text("Compact", "紧凑") : text("Comfort", "舒适"), symbol: "rectangle.compress.vertical", accent: store.mode.ringColor)
+                    FocusPetInfoRow(title: text("Compact dashboard", "紧凑仪表盘"), value: compactDashboard ? text("Compact", "紧凑") : text("Comfort", "舒适"), symbol: "rectangle.compress.vertical", accent: store.mode.ringColor(in: theme))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

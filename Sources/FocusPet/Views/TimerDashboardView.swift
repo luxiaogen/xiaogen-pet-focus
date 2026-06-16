@@ -2,10 +2,13 @@ import SwiftUI
 
 struct TimerDashboardView: View {
     @ObservedObject var store: TimerStore
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     let enterFloatingMode: () -> Void
     @State private var timerInput = ""
     @FocusState private var isTimerInputFocused: Bool
 
+    @State private var newTaskTitle = ""
+    @FocusState private var isNewTaskFieldFocused: Bool
     var body: some View {
         VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
             header
@@ -46,18 +49,9 @@ struct TimerDashboardView: View {
 
     private var header: some View {
         HStack(alignment: .center) {
-            PageHeader(title: "FocusPet", subtitle: store.mode.slogan(in: store.language), accent: store.mode.ringColor)
+            PageHeader(title: "FocusPet", subtitle: store.mode.slogan(in: store.language), accent: store.mode.ringColor(in: theme))
 
             Spacer()
-
-            Picker("Language", selection: $store.language) {
-                ForEach(AppLanguage.allCases) { language in
-                    Text(language.shortTitle).tag(language)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(width: 126)
-            .labelsHidden()
 
             Picker(languageText("Pet", "宠物"), selection: $store.selectedPetID) {
                 ForEach(store.availablePets) { pet in
@@ -69,14 +63,22 @@ struct TimerDashboardView: View {
         }
     }
 
+    private func commitNewTask() {
+        guard store.addTask(title: newTaskTitle) != nil else {
+            newTaskTitle = ""
+            return
+        }
+        newTaskTitle = ""
+    }
+
     private var timerPanel: some View {
         VStack(spacing: 18) {
             HStack {
-                FocusPetSectionTitle(title: languageText("Timer", "计时器"), symbol: "timer", accent: store.mode.ringColor)
+                FocusPetSectionTitle(title: languageText("Timer", "计时器"), symbol: "timer", accent: store.mode.ringColor(in: theme))
 
-                Picker(languageText("Task", "任务"), selection: $store.selectedTask) {
-                    ForEach(store.tasks, id: \.self) { task in
-                        Text(store.localizedTaskTitle(for: task)).tag(task)
+                Picker(languageText("Task", "任务"), selection: $store.selectedTaskID) {
+                    ForEach(store.tasks) { task in
+                        Text(store.localizedTaskTitle(for: task.id)).tag(task.id)
                     }
                 }
                 .pickerStyle(.menu)
@@ -87,7 +89,7 @@ struct TimerDashboardView: View {
             focusQueue
 
             ZStack {
-                CircularProgressRing(progress: store.progress, color: store.mode.ringColor)
+                CircularProgressRing(progress: store.progress, color: store.mode.ringColor(in: theme))
                     .frame(width: 300, height: 300)
 
                 VStack(spacing: 8) {
@@ -127,7 +129,7 @@ struct TimerDashboardView: View {
                         .padding(.vertical, 13)
                         .frame(minWidth: 164)
                 }
-                .buttonStyle(CapsuleGradientButtonStyle(color: store.mode.ringColor))
+                .buttonStyle(CapsuleGradientButtonStyle(color: store.mode.ringColor(in: theme)))
 
                 Button {
                     enterFloatingMode()
@@ -144,7 +146,7 @@ struct TimerDashboardView: View {
         }
         .padding(30)
         .frame(maxHeight: .infinity)
-        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor, material: .regularMaterial)
+        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor(in: theme), material: .regularMaterial)
     }
 
     private var modeControls: some View {
@@ -152,12 +154,12 @@ struct TimerDashboardView: View {
             Button(store.mode == .focus ? store.mode.title(in: store.language) : languageText("Focus", "专注")) {
                 store.startFocus()
             }
-            .buttonStyle(SmallModeButtonStyle(isSelected: store.mode == .focus, color: .focusTomato))
+            .buttonStyle(SmallModeButtonStyle(isSelected: store.mode == .focus, color: theme.accentColor))
 
             Button(store.mode == .breakTime ? store.mode.title(in: store.language) : languageText("Break", "休息")) {
                 store.startBreak()
             }
-            .buttonStyle(SmallModeButtonStyle(isSelected: store.mode == .breakTime, color: .breakSage))
+            .buttonStyle(SmallModeButtonStyle(isSelected: store.mode == .breakTime, color: theme.breakColor))
 
             Button(languageText("Reset", "重置")) {
                 store.resetCurrentMode()
@@ -172,7 +174,7 @@ struct TimerDashboardView: View {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(languageText("Session Plan", "本轮计划"))
                         .font(.system(size: 14, weight: .bold, design: .rounded))
-                    Text(store.localizedTaskTitle(for: store.selectedTask))
+                    Text(store.localizedTaskTitle(for: store.selectedTaskID))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -186,7 +188,7 @@ struct TimerDashboardView: View {
                         Text("\(minutes)m")
                             .frame(width: 46)
                     }
-                    .buttonStyle(QuickDurationButtonStyle(isSelected: Int(store.totalSeconds / 60) == minutes, color: store.mode.ringColor))
+                    .buttonStyle(QuickDurationButtonStyle(isSelected: Int(store.totalSeconds / 60) == minutes, color: store.mode.ringColor(in: theme)))
                     .help(languageText("Set timer to \(minutes) minutes", "设置为 \(minutes) 分钟"))
                 }
             }
@@ -206,30 +208,71 @@ struct TimerDashboardView: View {
                         .contentTransition(.numericText())
                 }
 
-                HStack(spacing: 8) {
-                    ForEach(store.tasks.prefix(3), id: \.self) { task in
-                        Button {
-                            store.selectedTask = task
-                        } label: {
-                            HStack(spacing: 5) {
-                                Image(systemName: store.selectedTask == task ? "checkmark.circle.fill" : "circle")
-                                Text(store.localizedTaskTitle(for: task))
-                                    .lineLimit(1)
+                VStack(spacing: 6) {
+                    ForEach(Array(store.tasks.enumerated()), id: \.element.id) { index, task in
+                        QueueTaskRow(
+                            task: task,
+                            isSelected: task.id == store.selectedTaskID,
+                            color: store.mode.ringColor(in: theme),
+                            title: store.localizedTaskTitle(for: task.id),
+                            canDelete: !task.isBuiltIn,
+                            onSelect: { store.selectedTaskID = task.id },
+                            onDelete: { store.deleteTask(id: task.id) },
+                            onDropped: { draggedID in
+                                guard let from = store.tasks.firstIndex(where: { $0.id == draggedID }) else { return }
+                                store.moveTask(from: from, to: index)
                             }
-                            .frame(maxWidth: .infinity)
-                        }
-                        .buttonStyle(QueueTaskButtonStyle(isSelected: store.selectedTask == task, color: store.mode.ringColor))
-                        .help(store.localizedTaskTitle(for: task))
+                        )
                     }
                 }
+
+                Divider()
+                    .opacity(0.5)
+
+                queueInputRow
             }
+        }
+    }
+
+    private var queueInputRow: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "plus.circle")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(.secondary)
+
+            TextField(languageText("Add a task, press Enter", "输入任务后按回车添加"), text: $newTaskTitle)
+                .textFieldStyle(.plain)
+                .font(.system(size: 12, weight: .medium))
+                .focused($isNewTaskFieldFocused)
+                .onSubmit(commitNewTask)
+
+            if !newTaskTitle.isEmpty {
+                Button {
+                    commitNewTask()
+                } label: {
+                    Image(systemName: "arrow.up.circle.fill")
+                        .foregroundStyle(store.mode.ringColor(in: theme))
+                }
+                .buttonStyle(.plain)
+                .help(languageText("Add", "添加"))
+            }
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(Color.white.opacity(0.18), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        .overlay {
+            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                .strokeBorder(
+                    isNewTaskFieldFocused ? store.mode.ringColor(in: theme).opacity(0.5) : Color.white.opacity(0.2),
+                    lineWidth: 0.8
+                )
         }
     }
 
     private var companionPanel: some View {
         VStack(spacing: 20) {
             HStack {
-                FocusPetSectionTitle(title: languageText("Companion", "专注伙伴"), symbol: "sparkles", accent: store.mode.ringColor)
+                FocusPetSectionTitle(title: languageText("Companion", "专注伙伴"), symbol: "sparkles", accent: store.mode.ringColor(in: theme))
             }
 
             PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
@@ -257,11 +300,11 @@ struct TimerDashboardView: View {
                 .font(.system(size: 13, weight: .semibold))
 
                 ProgressView(value: min(Double(store.completedSessions) / 4, 1))
-                    .tint(store.mode.ringColor)
+                    .tint(store.mode.ringColor(in: theme))
             }
         }
         .padding(22)
-        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor, material: .regularMaterial)
+        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor(in: theme), material: .regularMaterial)
     }
 
     private var companionCareModule: some View {
@@ -270,8 +313,8 @@ struct TimerDashboardView: View {
                 Text(languageText("Care Status", "照顾状态"))
                     .font(.system(size: 13, weight: .bold, design: .rounded))
 
-                FocusPetProgressRow(title: languageText("Energy", "能量"), value: store.isRunning ? 0.68 : 0.86, accent: .breakSage)
-                FocusPetProgressRow(title: languageText("Bond", "亲密度"), value: min(1, 0.42 + Double(store.completedSessions) * 0.12), accent: store.mode.ringColor)
+                FocusPetProgressRow(title: languageText("Energy", "能量"), value: store.isRunning ? 0.68 : 0.86, accent: theme.breakColor)
+                FocusPetProgressRow(title: languageText("Bond", "亲密度"), value: min(1, 0.42 + Double(store.completedSessions) * 0.12), accent: store.mode.ringColor(in: theme))
             }
         }
     }
@@ -414,24 +457,99 @@ private struct QuickDurationButtonStyle: ButtonStyle {
     }
 }
 
-private struct QueueTaskButtonStyle: ButtonStyle {
+private struct QueueTaskRow: View {
+    let task: FocusTask
     let isSelected: Bool
     let color: Color
+    let title: String
+    let canDelete: Bool
+    let onSelect: () -> Void
+    let onDelete: () -> Void
+    let onDropped: (String) -> Void
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
+    @State private var isHovering = false
+    @State private var isDropTarget = false
 
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 11, weight: .bold))
-            .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.74))
-            .padding(.horizontal, 9)
-            .padding(.vertical, 7)
-            .background {
-                RoundedRectangle(cornerRadius: 10, style: .continuous)
-                    .fill(isSelected ? color : Color.white.opacity(0.18))
-                    .overlay {
-                        RoundedRectangle(cornerRadius: 10, style: .continuous)
-                            .strokeBorder(Color.white.opacity(isSelected ? 0.42 : 0.18), lineWidth: 0.8)
-                    }
+    var body: some View {
+        HStack(spacing: 8) {
+            dragHandle
+
+            Button(action: onSelect) {
+                HStack(spacing: 6) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.system(size: 11, weight: .bold))
+                    Text(title)
+                        .font(.system(size: 12, weight: .semibold))
+                        .lineLimit(1)
+                    Spacer(minLength: 0)
+                }
+                .foregroundStyle(isSelected ? Color.white : Color.primary.opacity(0.84))
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background {
+                    RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .fill(isSelected ? color : Color.white.opacity(isHovering || isDropTarget ? 0.26 : 0.16))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .strokeBorder(
+                                    isDropTarget ? color.opacity(0.6) : Color.white.opacity(isSelected ? 0.42 : 0.2),
+                                    lineWidth: isDropTarget ? 1.4 : 0.8
+                                )
+                        }
+                }
             }
-            .scaleEffect(configuration.isPressed ? 0.97 : 1)
+            .buttonStyle(.plain)
+
+            if canDelete && isHovering {
+                Button(action: onDelete) {
+                    Image(systemName: "trash")
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(theme.accentColor.opacity(0.82))
+                        .frame(width: 22, height: 22)
+                        .background(Color.white.opacity(0.22), in: Circle())
+                }
+                .buttonStyle(.plain)
+                .transition(.scale.combined(with: .opacity))
+                .help("Delete")
+            }
+        }
+        .contentShape(Rectangle())
+        .onHover { hovering in
+            withAnimation(.smooth(duration: 0.16)) {
+                isHovering = hovering
+            }
+        }
+        .draggable(task.id) {
+            HStack(spacing: 6) {
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                Text(title)
+            }
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundStyle(isSelected ? Color.white : Color.primary)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(isSelected ? color : Color.primary.opacity(0.16), in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+        }
+        .dropDestination(for: String.self) { items, _ in
+            guard let draggedID = items.first, draggedID != task.id else { return false }
+            DispatchQueue.main.async {
+                onDropped(draggedID)
+            }
+            return true
+        } isTargeted: { hovering in
+            withAnimation(.smooth(duration: 0.18)) {
+                isDropTarget = hovering
+            }
+        }
+    }
+
+    private var dragHandle: some View {
+        Image(systemName: "line.3.horizontal")
+            .font(.system(size: 9, weight: .bold))
+            .foregroundStyle(.tertiary)
+            .opacity(isHovering ? 1 : 0.4)
+            .frame(width: 12)
+            .help("Drag to reorder")
     }
 }

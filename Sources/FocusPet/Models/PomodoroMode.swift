@@ -18,14 +18,14 @@ enum PomodoroMode: String, CaseIterable, Identifiable {
         }
     }
 
-    var ringColor: Color {
+    func ringColor(in theme: AppTheme) -> Color {
         switch self {
         case .focus:
-            .focusTomato
+            theme.accentColor
         case .breakTime:
-            .breakSage
+            theme.breakColor
         case .celebration:
-            .celebrationGold
+            theme.celebrationColor
         }
     }
 

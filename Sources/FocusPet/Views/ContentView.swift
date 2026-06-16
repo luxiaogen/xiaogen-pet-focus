@@ -3,12 +3,13 @@ import SwiftUI
 
 struct ContentView: View {
     @ObservedObject var store: TimerStore
+    @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     @State private var selectedDestination: SidebarDestination = .timer
     @State private var window: NSWindow?
 
     var body: some View {
         HStack(spacing: 0) {
-            SidebarView(selection: $selectedDestination, language: store.language)
+            SidebarView(selection: $selectedDestination, language: store.language, theme: theme)
                 .frame(width: 72)
 
             Group {
@@ -32,18 +33,18 @@ struct ContentView: View {
                 Rectangle().fill(.ultraThinMaterial)
                 LinearGradient(
                     colors: [
-                        Color.focusCream.opacity(0.38),
-                        Color.focusMist.opacity(0.24),
-                        store.mode.ringColor.opacity(0.12),
-                        Color.focusBlush.opacity(0.14)
+                        theme.creamColor.opacity(0.38),
+                        theme.mistColor.opacity(0.24),
+                        store.mode.ringColor(in: theme).opacity(0.12),
+                        theme.blushColor.opacity(0.14)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
                 RadialGradient(
                     colors: [
-                        store.mode.ringColor.opacity(0.2),
-                        Color.focusCream.opacity(0.18),
+                        store.mode.ringColor(in: theme).opacity(0.2),
+                        theme.creamColor.opacity(0.18),
                         Color.clear
                     ],
                     center: .topTrailing,
@@ -52,7 +53,7 @@ struct ContentView: View {
                 )
                 RadialGradient(
                     colors: [
-                        Color.breakSage.opacity(0.16),
+                        theme.breakColor.opacity(0.16),
                         Color.clear
                     ],
                     center: .bottomLeading,
@@ -69,8 +70,8 @@ struct ContentView: View {
                     LinearGradient(
                         colors: [
                             .white.opacity(0.72),
-                            store.mode.ringColor.opacity(0.88),
-                            Color.breakSage.opacity(0.3),
+                            store.mode.ringColor(in: theme).opacity(0.88),
+                            theme.breakColor.opacity(0.3),
                             .black.opacity(0.08)
                         ],
                         startPoint: .topLeading,
@@ -80,7 +81,7 @@ struct ContentView: View {
                 )
         }
         .shadow(color: .black.opacity(0.16), radius: 30, y: 20)
-        .shadow(color: store.mode.ringColor.opacity(0.18), radius: 24, y: 10)
+        .shadow(color: store.mode.ringColor(in: theme).opacity(0.18), radius: 24, y: 10)
         .animation(.smooth(duration: 0.32), value: selectedDestination)
         .animation(.smooth(duration: 0.42), value: store.mode)
         .background {
