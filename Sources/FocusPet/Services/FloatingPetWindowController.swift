@@ -46,7 +46,7 @@ final class FloatingPetWindowController {
     }
 
     func hide() {
-        panel?.orderOut(nil)
+        close()
     }
 
     func close() {

@@ -328,7 +328,6 @@ private struct WeeklyBarsView: View {
                             .strokeBorder(.white.opacity(0.35), lineWidth: 1)
                     }
                 }
-                .shadow(color: isToday ? accent.opacity(0.28) : .clear, radius: 8, y: 4)
 
             Text(weekdayLabel(for: day.day))
                 .font(.system(size: 11, weight: .bold))

@@ -48,7 +48,7 @@ struct PetHouseView: View {
 
                 GlassCard(tint: store.mode.ringColor(in: theme)) {
                     HStack(spacing: 18) {
-                        PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
+                        PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false, isLiveAnimating: store.isRunning)
                             .frame(width: 128, height: 128)
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -121,7 +121,7 @@ struct PetHouseView: View {
     private func stateCard(mode: PomodoroMode, title: String, description: String) -> some View {
         GlassCard(tint: mode.ringColor(in: theme)) {
             VStack(spacing: 14) {
-                PetView(pet: store.selectedPet, mode: mode, progress: mode == .celebration ? 1 : 0.62, compact: false)
+                PetView(pet: store.selectedPet, mode: mode, progress: mode == .celebration ? 1 : 0.62, compact: false, isLiveAnimating: false)
                     .frame(width: 150, height: 150)
 
                 VStack(spacing: 5) {

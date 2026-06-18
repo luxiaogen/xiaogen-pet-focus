@@ -275,7 +275,7 @@ struct TimerDashboardView: View {
                 FocusPetSectionTitle(title: languageText("Companion", "专注伙伴"), symbol: "sparkles", accent: store.mode.ringColor(in: theme))
             }
 
-            PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false)
+            PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false, isLiveAnimating: store.isRunning)
                 .frame(width: 188, height: 188)
 
             VStack(spacing: 4) {

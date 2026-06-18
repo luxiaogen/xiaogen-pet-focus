@@ -6,18 +6,21 @@ struct PetView: View {
     let mode: PomodoroMode
     let progress: Double
     let compact: Bool
+    /// When false, all continuous animations (bob, sprite cycling) are paused.
+    /// Pass false for static previews (e.g. pet-house state cards) so they
+    /// don't each spin up a CADisplayLink.
+    var isLiveAnimating: Bool = true
     @AppStorage("settings.appTheme") private var theme: AppTheme = .warmOrange
     @State private var bob = false
     @State private var isHovering = false
     @State private var isPressed = false
     @State private var showBurst = false
     @State private var burstSeed = 0
-    @State private var isVisible = true
 
     var body: some View {
         ZStack {
             Circle()
-                .fill(.ultraThinMaterial)
+                .fill(Color.white.opacity(0.15))
                 .overlay {
                     Circle()
                         .fill(mode.ringColor(in: theme).opacity(0.08))
@@ -41,12 +44,11 @@ struct PetView: View {
                 }
                 .overlay(alignment: .topLeading) {
                     Circle()
-                        .fill(Color.white.opacity(0.22))
-                        .frame(width: compact ? 34 : 52, height: compact ? 34 : 52)
-                        .blur(radius: compact ? 8 : 12)
+                        .fill(Color.white.opacity(0.16))
+                        .frame(width: compact ? 24 : 36, height: compact ? 24 : 36)
                         .offset(x: compact ? 22 : 34, y: compact ? 20 : 32)
                 }
-                .shadow(color: mode.ringColor(in: theme).opacity(0.22), radius: compact ? 8 : 18, y: compact ? 4 : 10)
+                .shadow(color: mode.ringColor(in: theme).opacity(0.14), radius: compact ? 6 : 12, y: compact ? 3 : 8)
 
             CircularProgressRing(progress: progress, color: mode.ringColor(in: theme))
                 .padding(compact ? 8 : 10)
@@ -68,7 +70,7 @@ struct PetView: View {
                         spritesheetURL: importedPet.spritesheetURL,
                         mode: mode,
                         isInteracting: isHovering || isPressed,
-                        isAnimating: isVisible
+                        isAnimating: isLiveAnimating
                     )
                 } else if let kind = pet.builtInKind {
                     switch kind {
@@ -82,16 +84,16 @@ struct PetView: View {
                         frameCount: kind.spriteFrameCount,
                         mode: mode,
                         isInteracting: isHovering || isPressed,
-                        isAnimating: isVisible
+                        isAnimating: isLiveAnimating
                     )
                     }
                 }
             }
             .padding(compact ? 16 : 22)
-            .offset(y: bob ? -5 : 3)
+            .offset(y: isLiveAnimating ? (bob ? -5 : 3) : 0)
             .scaleEffect(petScale)
             .rotationEffect(.degrees(isPressed ? -4 : 0))
-            .animation(isVisible ? .easeInOut(duration: 1.5).repeatForever(autoreverses: true) : nil, value: bob)
+            .animation(isLiveAnimating ? .easeInOut(duration: 1.5).repeatForever(autoreverses: true) : nil, value: bob)
             .animation(.spring(response: 0.22, dampingFraction: 0.68), value: isHovering)
             .animation(.spring(response: 0.2, dampingFraction: 0.55), value: isPressed)
 
@@ -126,10 +128,10 @@ struct PetView: View {
             }
         }
         .onAppear {
-            bob = true
+            if isLiveAnimating {
+                bob = true
+            }
         }
-        .onAppear { isVisible = true }
-        .onDisappear { isVisible = false }
     }
 
     private var petScale: CGFloat {

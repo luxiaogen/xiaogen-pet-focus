@@ -8,7 +8,7 @@ struct FloatingPetWidget: View {
 
     var body: some View {
         ZStack {
-            PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: true)
+            PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: true, isLiveAnimating: true)
                 .frame(width: 142, height: 142)
 
             VStack {
@@ -62,7 +62,7 @@ struct FloatingPetWidget: View {
             .help(store.isRunning ? languageText("Pause", "暂停") : languageText("Play", "播放"))
 
             Button {
-                FloatingPetWindowController.shared.hide()
+                FloatingPetWindowController.shared.close()
                 onExpand()
             } label: {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")

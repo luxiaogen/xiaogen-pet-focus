@@ -41,25 +41,6 @@ struct ContentView: View {
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
                 )
-                RadialGradient(
-                    colors: [
-                        store.mode.ringColor(in: theme).opacity(0.2),
-                        theme.creamColor.opacity(0.18),
-                        Color.clear
-                    ],
-                    center: .topTrailing,
-                    startRadius: 30,
-                    endRadius: 640
-                )
-                RadialGradient(
-                    colors: [
-                        theme.breakColor.opacity(0.16),
-                        Color.clear
-                    ],
-                    center: .bottomLeading,
-                    startRadius: 60,
-                    endRadius: 520
-                )
             }
             .ignoresSafeArea()
         }
@@ -80,8 +61,7 @@ struct ContentView: View {
                     lineWidth: 1.4
                 )
         }
-        .shadow(color: .black.opacity(0.16), radius: 30, y: 20)
-        .shadow(color: store.mode.ringColor(in: theme).opacity(0.18), radius: 24, y: 10)
+        .shadow(color: .black.opacity(0.14), radius: 22, y: 16)
         .animation(.smooth(duration: 0.32), value: selectedDestination)
         .animation(.smooth(duration: 0.42), value: store.mode)
         .background {
