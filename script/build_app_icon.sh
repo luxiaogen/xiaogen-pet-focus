@@ -27,6 +27,8 @@ sips -z 512 512   "$SRC" --out "$ICONSET/icon_256x256@2x.png" >/dev/null
 sips -z 512 512   "$SRC" --out "$ICONSET/icon_512x512.png"   >/dev/null
 cp "$SRC"              "$ICONSET/icon_512x512@2x.png"
 
-iconutil -c icns "$ICONSET" -o "$ICNS"
+if ! iconutil --convert icns --output "$ICNS" "$ICONSET"; then
+  python3 "$ROOT_DIR/script/build_app_icon_icns.py" "$SRC" "$ICNS"
+fi
 rm -rf "$ICONSET"
 echo "Wrote $ICNS"

@@ -1,114 +1,132 @@
 #!/usr/bin/env python3
-"""Generate a macOS-style app icon for FocusPet using the ikun chick sprite.
+"""Generate a clean macOS app icon for FocusPet.
 
-Produces a 1024x1024 PNG with a squircle (continuous corner) background,
-soft gradient, drop shadow under the chick, and the chick centered.
-This PNG is later converted to .icns via iconutil.
+The icon keeps the original white-capped chick mascot, but redraws it as a
+simple flat character so the app still feels recognizable at small sizes.
 """
-import math
+from __future__ import annotations
+
 from PIL import Image, ImageDraw, ImageFilter
 
-SRC = "Sources/FocusPet/Resources/Pets/ikunchick_0.png"
 OUT = "AppIcon-source.png"
 SIZE = 1024
+SCALE = 2
+CANVAS = SIZE * SCALE
 
 
-def continuous_corner_mask(size: int, radius: float) -> Image.Image:
-    """Approximate Apple's 'continuous' superellipse-like corner mask."""
+def s(value: float) -> int:
+    return int(round(value * SCALE))
+
+
+def mix(a: tuple[int, int, int], b: tuple[int, int, int], t: float) -> tuple[int, int, int]:
+    return tuple(int(a[i] + (b[i] - a[i]) * t) for i in range(3))
+
+
+def rounded_mask(size: int, radius: int) -> Image.Image:
     mask = Image.new("L", (size, size), 0)
     draw = ImageDraw.Draw(mask)
     draw.rounded_rectangle((0, 0, size - 1, size - 1), radius=radius, fill=255)
-    # Smooth the mask to soften the corner into a continuous curve.
-    return mask.filter(ImageFilter.GaussianBlur(radius=size * 0.012))
+    return mask
 
 
-def make_background(size: int) -> Image.Image:
-    """Warm cream-to-tomato diagonal gradient matching the app palette."""
-    bg = Image.new("RGB", (size, size))
-    # Approximate app palette:
-    #   focusCream (1.0, 0.96, 0.89)  ->  top-left
-    #   focusBlush (1.0, 0.82, 0.76)  ->  mid
-    #   focusTomato (1.0, 0.39, 0.28) ->  bottom-right
-    top = (255, 245, 227)        # focusCream
-    mid = (255, 209, 194)        # focusBlush
-    bot = (255, 99, 71)          # focusTomato
-    px = bg.load()
+def background(size: int) -> Image.Image:
+    top = (255, 240, 221)
+    mid = (255, 196, 174)
+    bottom = (248, 104, 87)
+
+    image = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    px = image.load()
     for y in range(size):
         for x in range(size):
-            t = (x + y) / (2 * (size - 1))  # 0 (top-left) .. 1 (bottom-right)
-            if t < 0.5:
-                u = t / 0.5
-                r = int(top[0] + (mid[0] - top[0]) * u)
-                g = int(top[1] + (mid[1] - top[1]) * u)
-                b = int(top[2] + (mid[2] - top[2]) * u)
+            t = (x * 0.58 + y * 0.82) / (size * 1.4)
+            t = max(0, min(1, t))
+            if t < 0.58:
+                color = mix(top, mid, t / 0.58)
             else:
-                u = (t - 0.5) / 0.5
-                r = int(mid[0] + (bot[0] - mid[0]) * u)
-                g = int(mid[1] + (bot[1] - mid[1]) * u)
-                b = int(mid[2] + (bot[2] - mid[2]) * u)
-            px[x, y] = (r, g, b)
-    return bg
+                color = mix(mid, bottom, (t - 0.58) / 0.42)
+            px[x, y] = (*color, 255)
+
+    shine = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shine)
+    sd.ellipse((s(106), s(92), s(768), s(750)), fill=(255, 255, 255, 70))
+    shine = shine.filter(ImageFilter.GaussianBlur(s(54)))
+    return Image.alpha_composite(image, shine)
+
+
+def draw_icon() -> Image.Image:
+    canvas = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+
+    bg = background(CANVAS)
+    mask = rounded_mask(CANVAS, s(224))
+    canvas.paste(bg, (0, 0), mask)
+
+    draw = ImageDraw.Draw(canvas)
+
+    # Soft card edge.
+    draw.rounded_rectangle(
+        (s(30), s(30), s(994), s(994)),
+        radius=s(202),
+        outline=(255, 255, 255, 125),
+        width=s(9),
+    )
+
+    # Character shadow.
+    shadow = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    sd = ImageDraw.Draw(shadow)
+    sd.ellipse((s(292), s(746), s(732), s(858)), fill=(80, 38, 28, 92))
+    shadow = shadow.filter(ImageFilter.GaussianBlur(s(24)))
+    canvas.alpha_composite(shadow)
+    draw = ImageDraw.Draw(canvas)
+
+    outline = (91, 59, 47, 190)
+    dark = (46, 36, 34, 255)
+
+    # Small body, kept visible so the mascot is less abstract than a face mark.
+    draw.ellipse((s(328), s(532), s(696), s(848)), fill=(44, 36, 35, 255))
+    draw.ellipse((s(328), s(532), s(696), s(848)), outline=outline, width=s(8))
+    draw.rounded_rectangle((s(406), s(594), s(618), s(824)), radius=s(88), fill=(255, 255, 249, 255))
+    draw.rounded_rectangle((s(286), s(610), s(394), s(760)), radius=s(54), fill=(44, 36, 35, 255))
+    draw.rounded_rectangle((s(630), s(610), s(738), s(760)), radius=s(54), fill=(44, 36, 35, 255))
+    draw.ellipse((s(374), s(804), s(500), s(878)), fill=(246, 132, 32, 255))
+    draw.ellipse((s(524), s(804), s(650), s(878)), fill=(246, 132, 32, 255))
+
+    # Chick head.
+    face_box = (s(260), s(202), s(764), s(706))
+    draw.ellipse(face_box, fill=(255, 214, 67, 255))
+    draw.ellipse(face_box, outline=outline, width=s(9))
+
+    # White cap and side tufts from the original mascot, simplified to broad shapes.
+    cap = Image.new("RGBA", (CANVAS, CANVAS), (0, 0, 0, 0))
+    cd = ImageDraw.Draw(cap)
+    cd.rounded_rectangle((s(336), s(156), s(688), s(358)), radius=s(90), fill=(255, 255, 249, 255))
+    cd.ellipse((s(280), s(252), s(454), s(480)), fill=(255, 255, 249, 255))
+    cd.ellipse((s(570), s(252), s(744), s(480)), fill=(255, 255, 249, 255))
+    cd.polygon([(s(456), s(354)), (s(512), s(432)), (s(568), s(354))], fill=(255, 214, 67, 255))
+    canvas.alpha_composite(cap)
+    draw = ImageDraw.Draw(canvas)
+    draw.arc((s(346), s(184), s(678), s(374)), 196, 344, fill=(95, 64, 52, 120), width=s(7))
+
+    # Eyes and beak.
+    for cx in (s(430), s(594)):
+        draw.ellipse((cx - s(54), s(386), cx + s(54), s(508)), fill=(255, 255, 255, 255))
+        draw.ellipse((cx - s(20), s(430), cx + s(20), s(474)), fill=dark)
+        draw.ellipse((cx - s(8), s(420), cx + s(6), s(434)), fill=(255, 255, 255, 220))
+
+    draw.ellipse((s(326), s(520), s(410), s(604)), fill=(255, 93, 73, 210))
+    draw.ellipse((s(614), s(520), s(698), s(604)), fill=(255, 93, 73, 210))
+    draw.rounded_rectangle((s(434), s(520), s(590), s(606)), radius=s(42), fill=(255, 144, 32, 255))
+    draw.arc((s(458), s(532), s(566), s(596)), 20, 160, fill=(95, 54, 31, 190), width=s(7))
+
+    # Tiny collar highlight; one small detail is enough for depth.
+    draw.rounded_rectangle((s(426), s(620), s(598), s(646)), radius=s(13), fill=(255, 255, 249, 225))
+
+    final = canvas.resize((SIZE, SIZE), Image.Resampling.LANCZOS)
+    return final
 
 
 def main() -> None:
-    # 1. Background gradient (square, will be masked to squircle).
-    bg = make_background(SIZE).convert("RGBA")
-
-    # Subtle vignette: darken edges slightly for depth.
-    vignette = Image.new("L", (SIZE, SIZE), 0)
-    vd = ImageDraw.Draw(vignette)
-    vd.ellipse((-SIZE * 0.15, -SIZE * 0.15, SIZE * 1.15, SIZE * 1.15), fill=255)
-    vignette = vignette.filter(ImageFilter.GaussianBlur(radius=SIZE * 0.18))
-    darken = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    # Blend a translucent black using inverse vignette as mask.
-    inv_vig = Image.eval(vignette, lambda v: 255 - v)
-    black_layer = Image.new("RGBA", (SIZE, SIZE), (120, 40, 25, 60))
-    bg = Image.composite(black_layer, bg, inv_vig)
-
-    # 2. Load chick sprite and scale it up (it's 256px, scale to ~78% of icon).
-    chick = Image.open(SRC).convert("RGBA")
-    target = int(SIZE * 0.74)
-    chick = chick.resize((target, target), Image.LANCZOS)
-
-    # Trim transparent borders to find real bounds, so we center precisely.
-    bbox = chick.getbbox()
-    if bbox:
-        chick_cropped = chick.crop(bbox)
-        # Re-pad to a square of the chick's max dimension so centering is exact.
-        w, h = chick_cropped.size
-        side = max(w, h)
-        square = Image.new("RGBA", (side, side), (0, 0, 0, 0))
-        square.paste(chick_cropped, ((side - w) // 2, (side - h) // 2), chick_cropped)
-        chick = square.resize((target, target), Image.LANCZOS)
-
-    # 3. Drop shadow for the chick.
-    shadow_pad = 60
-    shadow = Image.new("RGBA", (target + shadow_pad * 2, target + shadow_pad * 2), (0, 0, 0, 0))
-    # Use the chick alpha as shadow shape.
-    chick_alpha = chick.split()[-1]
-    shadow_alpha = chick_alpha.filter(ImageFilter.GaussianBlur(radius=18))
-    shadow_alpha = shadow_alpha.point(lambda v: min(255, int(v * 0.55)))
-    shadow.paste((0, 0, 0, 255), (0, 0), shadow_alpha)
-    # Offset shadow down a touch.
-    shadow_offset = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    sx = (SIZE - shadow.width) // 2
-    sy = (SIZE - shadow.height) // 2 + 26
-    shadow_offset.paste(shadow, (sx, sy), shadow)
-
-    # 4. Composite: bg -> shadow -> chick.
-    canvas = bg.convert("RGBA")
-    canvas = Image.alpha_composite(canvas, shadow_offset)
-    cx = (SIZE - target) // 2
-    cy = (SIZE - target) // 2 + 8
-    canvas.paste(chick, (cx, cy), chick)
-
-    # 5. Mask to squircle (Apple continuous corner ~ 22.37% of size).
-    radius = SIZE * 0.2237
-    mask = continuous_corner_mask(SIZE, radius)
-    final = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
-    final.paste(canvas, (0, 0), mask)
-
-    final.save(OUT, "PNG")
+    icon = draw_icon()
+    icon.save(OUT, "PNG")
     print(f"Wrote {OUT} ({SIZE}x{SIZE})")
 
 
