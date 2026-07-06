@@ -1,31 +1,42 @@
 import SwiftUI
 
-struct SidebarView: View {
+struct BottomTabBar: View {
     @Binding var selection: SidebarDestination
     let language: AppLanguage
     let theme: AppTheme
     @State private var hoveredDestination: SidebarDestination?
 
     var body: some View {
-        VStack(spacing: 14) {
-            Image(systemName: "pawprint.fill")
-                .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(theme.accentColor.opacity(0.62))
-                .frame(width: 34, height: 34)
-                .padding(.top, 24)
-
-            Spacer(minLength: 0)
-
+        HStack(spacing: 12) {
             navigationButtons
-
-            Spacer(minLength: 0)
         }
-        .frame(maxHeight: .infinity)
+        .padding(.horizontal, DesignTokens.Spacing.sm)
+        .padding(.vertical, DesignTokens.Spacing.sm)
+        .background {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .fill(Color(nsColor: .controlBackgroundColor).opacity(0.92))
+                .overlay {
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(0.14),
+                            theme.accentColor.opacity(0.06)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                }
+        }
+        .overlay {
+            RoundedRectangle(cornerRadius: 24, style: .continuous)
+                .strokeBorder(Color.primary.opacity(0.12), lineWidth: 1)
+        }
+        .shadow(color: Color.black.opacity(0.14), radius: 14, y: 8)
         .animation(.smooth(duration: 0.28), value: selection)
     }
 
     private var navigationButtons: some View {
-        VStack(spacing: 10) {
+        HStack(spacing: 8) {
             ForEach(SidebarDestination.allCases) { destination in
                 let isSelected = selection == destination
                 let isHovered = hoveredDestination == destination
@@ -35,26 +46,35 @@ struct SidebarView: View {
                         selection = destination
                     }
                 } label: {
-                    Image(systemName: destination.symbolName)
-                        .font(.system(size: 17, weight: .semibold))
-                        .frame(width: 38, height: 38)
-                        .foregroundStyle(isSelected ? theme.accentColor.opacity(0.74) : Color.focusInk.opacity(isHovered ? 0.62 : 0.44))
+                    VStack(spacing: 4) {
+                        Image(systemName: destination.symbolName)
+                            .font(.system(size: 16, weight: .bold))
+                            .frame(height: 18)
+
+                        Text(destination.shortTitle(in: language))
+                            .font(.system(size: 10, weight: .bold, design: .rounded))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.72)
+                    }
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 46)
+                        .foregroundStyle(isSelected ? theme.accentColor : Color.primary.opacity(isHovered ? 0.76 : 0.56))
                         .background {
-                            Circle()
-                                .fill(isSelected ? Color.white.opacity(0.22) : Color.white.opacity(isHovered ? 0.16 : 0.001))
+                            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                                .fill(isSelected ? theme.accentColor.opacity(0.16) : Color.primary.opacity(isHovered ? 0.055 : 0.001))
                                 .overlay {
-                                    Circle()
+                                    RoundedRectangle(cornerRadius: 16, style: .continuous)
                                         .strokeBorder(
-                                            isSelected ? theme.accentColor.opacity(0.22) : Color.white.opacity(isHovered ? 0.24 : 0),
-                                            lineWidth: 0.8
+                                            isSelected ? theme.accentColor.opacity(0.26) : Color.primary.opacity(isHovered ? 0.1 : 0),
+                                            lineWidth: 1
                                         )
                                 }
-                                .shadow(color: isSelected ? theme.accentColor.opacity(0.06) : .clear, radius: 7, y: 3)
                         }
-                        .scaleEffect(isHovered && !isSelected ? 1.025 : 1)
+                        .scaleEffect(isHovered && !isSelected ? 1.015 : 1)
                 }
                 .buttonStyle(.plain)
                 .help(destination.title(in: language))
+                .frame(maxWidth: .infinity)
                 .onHover { isHovering in
                     withAnimation(.smooth(duration: 0.16)) {
                         hoveredDestination = isHovering ? destination : nil
@@ -62,5 +82,6 @@ struct SidebarView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
     }
 }

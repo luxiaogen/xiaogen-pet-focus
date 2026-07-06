@@ -9,7 +9,7 @@ struct PetHouseView: View {
 
     var body: some View {
         FocusPetScrollPage {
-            VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
                 HStack {
                     PageHeader(
                         title: text("Pet House", "宠物屋"),
@@ -47,7 +47,7 @@ struct PetHouseView: View {
                 }
 
                 GlassCard(tint: store.mode.ringColor(in: theme)) {
-                    HStack(spacing: 18) {
+                    HStack(spacing: DesignTokens.Spacing.lg) {
                         PetView(pet: store.selectedPet, mode: store.mode, progress: store.progress, compact: false, isLiveAnimating: store.isRunning)
                             .frame(width: 128, height: 128)
 

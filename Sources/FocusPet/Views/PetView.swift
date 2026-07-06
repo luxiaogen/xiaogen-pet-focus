@@ -24,7 +24,7 @@ struct PetView: View {
                 .overlay {
                     Circle()
                         .fill(mode.ringColor(in: theme).opacity(0.08))
-                        .padding(compact ? 14 : 20)
+                        .padding(compact ? DesignTokens.Spacing.sm : DesignTokens.Spacing.md)
                 }
                 .overlay {
                     Circle()
@@ -51,7 +51,7 @@ struct PetView: View {
                 .shadow(color: mode.ringColor(in: theme).opacity(0.14), radius: compact ? 6 : 12, y: compact ? 3 : 8)
 
             CircularProgressRing(progress: progress, color: mode.ringColor(in: theme))
-                .padding(compact ? 8 : 10)
+                .padding(compact ? DesignTokens.Spacing.xs : DesignTokens.Spacing.sm)
 
             if isHovering {
                 InteractionHintRing(color: mode.ringColor(in: theme))
@@ -89,7 +89,7 @@ struct PetView: View {
                     }
                 }
             }
-            .padding(compact ? 16 : 22)
+            .padding(compact ? DesignTokens.Spacing.md : DesignTokens.Spacing.lg)
             .offset(y: isLiveAnimating ? (bob ? -5 : 3) : 0)
             .scaleEffect(petScale)
             .rotationEffect(.degrees(isPressed ? -4 : 0))

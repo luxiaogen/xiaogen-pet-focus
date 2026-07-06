@@ -21,6 +21,19 @@ enum SidebarDestination: String, CaseIterable, Identifiable {
         }
     }
 
+    func shortTitle(in language: AppLanguage) -> String {
+        switch self {
+        case .timer:
+            language == .chinese ? "计时" : "Timer"
+        case .petHouse:
+            language == .chinese ? "宠物" : "Pet"
+        case .statistics:
+            language == .chinese ? "统计" : "Stats"
+        case .settings:
+            language == .chinese ? "设置" : "Settings"
+        }
+    }
+
     var symbolName: String {
         switch self {
         case .timer:

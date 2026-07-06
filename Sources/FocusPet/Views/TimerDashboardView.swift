@@ -10,12 +10,12 @@ struct TimerDashboardView: View {
     @State private var newTaskTitle = ""
     @FocusState private var isNewTaskFieldFocused: Bool
     var body: some View {
-        VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
+        VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
             header
 
             GeometryReader { proxy in
                 if proxy.size.width >= 900 {
-                    HStack(alignment: .top, spacing: FocusPetLayout.sectionSpacing) {
+                    HStack(alignment: .top, spacing: DesignTokens.Spacing.section) {
                         timerPanel
                             .frame(minWidth: 560, maxWidth: .infinity, maxHeight: .infinity)
 
@@ -25,7 +25,7 @@ struct TimerDashboardView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
                 } else {
                     ScrollView {
-                        VStack(spacing: FocusPetLayout.cardSpacing) {
+                        VStack(spacing: DesignTokens.Spacing.cardGap) {
                             timerPanel
                                 .frame(maxWidth: .infinity, minHeight: 620)
 
@@ -37,7 +37,7 @@ struct TimerDashboardView: View {
                 }
             }
         }
-        .padding(FocusPetLayout.pagePadding)
+        .padding(DesignTokens.Spacing.page)
         .onAppear {
             timerInput = store.formattedRemaining
         }
@@ -144,9 +144,9 @@ struct TimerDashboardView: View {
 
             modeControls
         }
-        .padding(30)
+        .padding(DesignTokens.Spacing.xxl)
         .frame(maxHeight: .infinity)
-        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor(in: theme), material: .regularMaterial)
+        .appleGlassSurface(cornerRadius: DesignTokens.Rounded.xl, tint: store.mode.ringColor(in: theme), material: .regularMaterial)
     }
 
     private var modeControls: some View {
@@ -173,7 +173,7 @@ struct TimerDashboardView: View {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 7) {
                     Text(languageText("Session Plan", "本轮计划"))
-                        .font(.system(size: 14, weight: .bold, design: .rounded))
+                        .font(DesignTokens.Typography.labelMedium())
                     Text(store.localizedTaskTitle(for: store.selectedTaskID))
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
@@ -200,7 +200,7 @@ struct TimerDashboardView: View {
             VStack(alignment: .leading, spacing: 10) {
                 HStack {
                     Text(languageText("Focus Queue", "专注队列"))
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .font(DesignTokens.Typography.labelMedium())
                     Spacer()
                     Text("\(store.tasks.count)")
                         .font(.system(size: 11, weight: .bold))
@@ -280,7 +280,7 @@ struct TimerDashboardView: View {
 
             VStack(spacing: 4) {
                 Text(store.selectedPet.title(in: store.language))
-                    .font(.system(size: 21, weight: .bold, design: .rounded))
+                    .font(DesignTokens.Typography.headlineMedium())
                 Text(statusText)
                     .font(.system(size: 13, weight: .medium))
                     .foregroundStyle(.secondary)
@@ -303,15 +303,15 @@ struct TimerDashboardView: View {
                     .tint(store.mode.ringColor(in: theme))
             }
         }
-        .padding(22)
-        .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius + 2, tint: store.mode.ringColor(in: theme), material: .regularMaterial)
+        .padding(DesignTokens.Spacing.lg)
+        .appleGlassSurface(cornerRadius: DesignTokens.Rounded.xl, tint: store.mode.ringColor(in: theme), material: .regularMaterial)
     }
 
     private var companionCareModule: some View {
         FocusPetSoftPanel {
             VStack(alignment: .leading, spacing: 10) {
                 Text(languageText("Care Status", "照顾状态"))
-                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .font(DesignTokens.Typography.labelMedium())
 
                 FocusPetProgressRow(title: languageText("Energy", "能量"), value: store.isRunning ? 0.68 : 0.86, accent: theme.breakColor)
                 FocusPetProgressRow(title: languageText("Bond", "亲密度"), value: min(1, 0.42 + Double(store.completedSessions) * 0.12), accent: store.mode.ringColor(in: theme))

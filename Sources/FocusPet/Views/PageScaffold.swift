@@ -1,13 +1,7 @@
 import SwiftUI
 
-enum FocusPetLayout {
-    static let pagePadding: CGFloat = 32
-    static let sectionSpacing: CGFloat = 24
-    static let cardSpacing: CGFloat = 18
-    static let cardPadding: CGFloat = 22
-    static let cardRadius: CGFloat = 22
-    static let controlRadius: CGFloat = 14
-}
+// FocusPetLayout is now defined in DesignTokens.swift and bridged for compatibility.
+// All new code should prefer DesignTokens.Spacing / DesignTokens.Rounded directly.
 
 struct PageHeader: View {
     let title: String
@@ -58,8 +52,7 @@ struct GlassCard<Content: View>: View {
 
     var body: some View {
         content
-            .padding(FocusPetLayout.cardPadding)
-            .appleGlassSurface(cornerRadius: FocusPetLayout.cardRadius, tint: tint, material: .regularMaterial)
+            .focusPetGlassCard(tint: tint)
             .overlay(alignment: .topLeading) {
                 Capsule()
                     .fill(
@@ -72,7 +65,6 @@ struct GlassCard<Content: View>: View {
                     .frame(width: 40, height: 4)
                     .padding(20)
             }
-            .contentShape(RoundedRectangle(cornerRadius: FocusPetLayout.cardRadius, style: .continuous))
     }
 }
 
@@ -81,7 +73,7 @@ struct AdaptivePair<Leading: View, Trailing: View>: View {
     let leading: Leading
     let trailing: Trailing
 
-    init(spacing: CGFloat = FocusPetLayout.cardSpacing, @ViewBuilder leading: () -> Leading, @ViewBuilder trailing: () -> Trailing) {
+    init(spacing: CGFloat = DesignTokens.Spacing.cardGap, @ViewBuilder leading: () -> Leading, @ViewBuilder trailing: () -> Trailing) {
         self.spacing = spacing
         self.leading = leading()
         self.trailing = trailing()
@@ -108,7 +100,7 @@ struct AdaptiveTriplet<First: View, Second: View, Third: View>: View {
     let second: Second
     let third: Third
 
-    init(spacing: CGFloat = FocusPetLayout.cardSpacing, @ViewBuilder first: () -> First, @ViewBuilder second: () -> Second, @ViewBuilder third: () -> Third) {
+    init(spacing: CGFloat = DesignTokens.Spacing.cardGap, @ViewBuilder first: () -> First, @ViewBuilder second: () -> Second, @ViewBuilder third: () -> Third) {
         self.spacing = spacing
         self.first = first()
         self.second = second()
@@ -254,9 +246,9 @@ struct FocusPetSoftPanel<Content: View>: View {
     var body: some View {
         content
             .padding(12)
-            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: FocusPetLayout.controlRadius, style: .continuous))
+            .background(Color.primary.opacity(0.045), in: RoundedRectangle(cornerRadius: DesignTokens.Rounded.md, style: .continuous))
             .overlay {
-                RoundedRectangle(cornerRadius: FocusPetLayout.controlRadius, style: .continuous)
+                RoundedRectangle(cornerRadius: DesignTokens.Rounded.md, style: .continuous)
                     .strokeBorder(Color.white.opacity(0.2), lineWidth: 0.8)
             }
     }
@@ -274,15 +266,9 @@ struct FocusPetScrollPage<Content: View>: View {
             ScrollView {
                 content
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(FocusPetLayout.pagePadding)
+                    .padding(DesignTokens.Spacing.page)
                     .frame(width: proxy.size.width, alignment: .leading)
             }
         }
-    }
-}
-
-extension View {
-    func focusPetPagePadding() -> some View {
-        padding(FocusPetLayout.pagePadding)
     }
 }

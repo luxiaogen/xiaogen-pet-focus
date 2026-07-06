@@ -6,7 +6,7 @@ struct StatisticsView: View {
 
     var body: some View {
         FocusPetScrollPage {
-            VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
                 PageHeader(
                     title: text("Statistics", "统计"),
                     subtitle: text("A focused snapshot of your Pomodoro progress.", "快速查看你的番茄钟进度。"),

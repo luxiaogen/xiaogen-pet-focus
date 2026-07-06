@@ -8,10 +8,7 @@ struct ContentView: View {
     @State private var window: NSWindow?
 
     var body: some View {
-        HStack(spacing: 0) {
-            SidebarView(selection: $selectedDestination, language: store.language, theme: theme)
-                .frame(width: 72)
-
+        VStack(spacing: 0) {
             Group {
                 switch selectedDestination {
                 case .timer:
@@ -26,17 +23,21 @@ struct ContentView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .transition(.opacity.combined(with: .scale(scale: 0.985)))
+
+            BottomTabBar(selection: $selectedDestination, language: store.language, theme: theme)
+                .padding(.horizontal, DesignTokens.Spacing.xl)
+                .padding(.top, DesignTokens.Spacing.sm)
+                .padding(.bottom, DesignTokens.Spacing.lg)
         }
         .background {
             ZStack {
-                Rectangle().fill(Color(nsColor: .windowBackgroundColor).opacity(0.5))
-                Rectangle().fill(.ultraThinMaterial)
+                Rectangle().fill(Color(nsColor: .windowBackgroundColor).opacity(0.82))
                 LinearGradient(
                     colors: [
-                        theme.creamColor.opacity(0.38),
-                        theme.mistColor.opacity(0.24),
-                        store.mode.ringColor(in: theme).opacity(0.12),
-                        theme.blushColor.opacity(0.14)
+                        theme.creamColor.opacity(0.26),
+                        theme.mistColor.opacity(0.16),
+                        store.mode.ringColor(in: theme).opacity(0.08),
+                        theme.blushColor.opacity(0.1)
                     ],
                     startPoint: .topLeading,
                     endPoint: .bottomTrailing
@@ -44,9 +45,9 @@ struct ContentView: View {
             }
             .ignoresSafeArea()
         }
-        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: DesignTokens.Rounded.xl, style: .continuous))
         .overlay {
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
+            RoundedRectangle(cornerRadius: DesignTokens.Rounded.xl, style: .continuous)
                 .strokeBorder(
                     LinearGradient(
                         colors: [

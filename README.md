@@ -57,9 +57,11 @@ Sources/FocusPet/
   Models/     Pet, imported pet, timer mode, language, and sidebar models
   Stores/     TimerStore app state and Pomodoro timer logic
   Services/   AppKit floating window controller and Codex pet importer
-  Support/    Shared colors and window accessor helpers
+  Support/    Shared colors, glass surface, and design tokens
   Views/      Dashboard, sidebar, pet, ring, and widget views
 ```
+
+UI styling follows `DESIGN.md` (Google open-source design system format) located at the project root. Tokens for spacing, shapes, typography, and components are implemented in `DesignTokens.swift` and consumed by views.
 
 ## Notes
 

@@ -10,7 +10,7 @@ struct SettingsView: View {
 
     var body: some View {
         FocusPetScrollPage {
-            VStack(alignment: .leading, spacing: FocusPetLayout.sectionSpacing) {
+            VStack(alignment: .leading, spacing: DesignTokens.Spacing.section) {
                 PageHeader(
                     title: text("Settings", "设置"),
                     subtitle: text("Tune the FocusPet session and interface defaults.", "调整 FocusPet 的番茄钟和界面偏好。"),

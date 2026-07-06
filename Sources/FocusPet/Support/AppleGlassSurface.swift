@@ -45,7 +45,7 @@ struct AppleGlassSurface: ViewModifier {
 
 extension View {
     func appleGlassSurface(
-        cornerRadius: CGFloat = 18,
+        cornerRadius: CGFloat = DesignTokens.Rounded.xl,
         tint: Color = .primary,
         material: Material = .regularMaterial,
         shadow: Bool = true
